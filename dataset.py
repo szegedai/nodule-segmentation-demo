@@ -1,15 +1,21 @@
-"""Datasets for the two-stage pipeline.
+"""Datasets for the three-task pipeline.
 
-Nodule3DDataset (== NoduleFineCropDataset)
+Nodule3DDataset (== NoduleFineCropDataset)   [task: nodule]
     Loads a CT volume + nodule mask from the unified corpus, crops both to
     the precomputed per-series lung bbox, then hands the crop to the
     transform pipeline (which resizes to 256³).
 
-Roi2DDataset
+Roi2DDataset                                 [task: roi]
     One sample per axial slice. Walks ct_2d/ once at construction and
     keeps every '<series_uid>_<NNNN>.npz' whose series UID is in the split.
 
-Both use series-UID basenames; the shared split JSON is a dict with
+JointFullVolumeDataset                       [task: joint]
+    Loads a CT volume + lung mask + nodule mask WITHOUT bbox cropping. The
+    transform pipeline resizes the whole volume to 256³. The lung and
+    nodule masks are combined into a 3-class integer label
+    {0=background, 1=lung, 2=nodule} — nodule takes precedence over lung.
+
+All three use series-UID basenames; the shared split JSON is a dict with
 "train"/"val"/"test" lists of "unified/<uid>.npz" strings.
 """
 
@@ -124,6 +130,62 @@ def _resize2d(arr: np.ndarray, target: tuple, mode: str) -> np.ndarray:
     return F.interpolate(t, size=target, **kw)[0].numpy()
 
 
+# ── 3D joint (lung + nodule) segmentation ────────────────────────────────────
+
+class JointFullVolumeDataset(Dataset):
+    """Full-volume 3-class {bg, lung, nodule} dataset — no bbox crop.
+
+    Parameters
+    ----------
+    dataset_configs : list of {"name", "ct_dir", "lung_dir", "nodule_dir"} dicts
+    transform       : callable applied to {"image", "label"} dict
+    filenames       : list of "<name>/<uid>.npz" keys to include (from split)
+    """
+
+    def __init__(self, dataset_configs, transform=None, filenames=None):
+        wanted = set(filenames) if filenames is not None else None
+        self.transform = transform
+        self.samples = []
+        for ds in dataset_configs:
+            name       = ds["name"]
+            ct_dir     = ds["ct_dir"]
+            lung_dir   = ds["lung_dir"]
+            nodule_dir = ds["nodule_dir"]
+            for fname in sorted(f for f in os.listdir(ct_dir) if f.endswith(".npz")):
+                key = f"{name}/{fname}"
+                if wanted is not None and key not in wanted:
+                    continue
+                lung_p   = os.path.join(lung_dir,   fname)
+                nodule_p = os.path.join(nodule_dir, fname)
+                if not (os.path.exists(lung_p) and os.path.exists(nodule_p)):
+                    continue
+                self.samples.append({
+                    "ct_path":     os.path.join(ct_dir, fname),
+                    "lung_path":   lung_p,
+                    "nodule_path": nodule_p,
+                    "key":         key,
+                })
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        s      = self.samples[idx]
+        ct     = np.load(s["ct_path"])["data"].astype(np.float32)[:1]      # (1, H, W, D)
+        lung   = np.load(s["lung_path"])["data"].astype(np.uint8)[:1]      # (1, H, W, D)
+        nodule = np.load(s["nodule_path"])["data"].astype(np.uint8)[:1]    # (1, H, W, D)
+
+        # 3-class integer label: nodule > lung > background
+        label = np.zeros_like(ct, dtype=np.int64)
+        label[lung   > 0] = 1
+        label[nodule > 0] = 2
+
+        sample = {"image": ct, "label": label, "filename": s["key"]}
+        if self.transform is not None:
+            sample = self.transform(sample)
+        return sample
+
+
 # ── shared split loading ──────────────────────────────────────────────────────
 
 def load_split(split_json):
@@ -166,6 +228,16 @@ def build_datasets(task, cfg, train_transform, val_transform):
         target     = cfg["preprocessing"]["target_size"]
         train_ds = Roi2DDataset(root, train_uids, target_size=target, transform=train_transform)
         val_ds   = Roi2DDataset(root, val_uids,   target_size=target, transform=val_transform)
+        return train_ds, val_ds
+
+    if task == "joint":
+        split = load_split(cfg["data"]["split_json"])
+        train_ds = JointFullVolumeDataset(cfg["data"]["datasets"],
+                                          transform=train_transform,
+                                          filenames=split["train"])
+        val_ds   = JointFullVolumeDataset(cfg["data"]["datasets"],
+                                          transform=val_transform,
+                                          filenames=split["val"])
         return train_ds, val_ds
 
     raise ValueError(f"unknown task: {task!r}")

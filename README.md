@@ -1,9 +1,16 @@
 # Nodule segmentation — reproduction demo
 
-A simplified, non-cluster copy of the production Stage-2 fine nodule
-training pipeline. Each of the three bundled configs reproduces one of
-the trained models reported in the paper — same model, same loss, same
-split, same bboxes, same seed.
+A simplified, non-cluster copy of the production training pipeline
+covering all three tasks the paper reports:
+
+- **ROI** — 2D per-slice lung foreground segmentation (feeds the two-stage pipeline)
+- **Nodule** — 3D nodule segmentation on lung-bbox-cropped input
+- **Joint (end-to-end)** — 3D full-volume 3-class {bg, lung, nodule} model, no bbox stage
+
+Each bundled config reproduces one of the trained models reported in the
+paper — same model, same loss, same split, same bboxes, same seed. All
+nine trained checkpoints are hosted on HuggingFace under
+[`Kakimaki00`](https://huggingface.co/Kakimaki00).
 
 ## Quickstart
 
@@ -25,9 +32,9 @@ python train.py --config configs/v7.yaml --resume
 
 ## Inference on a new CT
 
-To run the full two-stage pipeline (ROI → bbox → nodule) on a raw CT
-volume, download one ROI checkpoint and one nodule checkpoint from
-HuggingFace and hand them to `inference.py`:
+Two pipelines supported by `inference.py`:
+
+**Two-stage** (ROI → bbox → nodule) — matches how v6/v7/v9 were trained:
 
 ```bash
 pip install huggingface_hub                     # if not already installed
@@ -40,17 +47,30 @@ python inference.py \
     --ct         path/to/case.npz \
     --roi-dir    ./ckpts/roi \
     --nodule-dir ./ckpts/nodule \
-    --output     nodule_mask.npz
+    --output     nodule_mask.npz            # (1, H, W, D) uint8 binary
+```
+
+**Joint end-to-end** (single 3-class model, no bbox stage):
+
+```bash
+huggingface-cli download Kakimaki00/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
+
+python inference.py \
+    --ct        path/to/case.npz \
+    --joint-dir ./ckpts/joint \
+    --output    joint_mask.npz              # (1, H, W, D) uint8 in {0=bg, 1=lung, 2=nodule}
 ```
 
 The input CT is expected as a `.npz` with a `data` array of shape
 `(1, H, W, D)`, float32, values in `[0, 1]` (same normalisation the
-training pipeline uses). The output nodule mask is written as
-`{'data': (1, H, W, D) uint8}` at the input's native resolution.
-`inference.py --help` lists the two alternative flag pairs
-(`--roi-weights` + `--roi-config`) if you'd rather pass paths directly.
+training pipeline uses). Two-stage output is a binary nodule mask;
+joint output is a 3-class label. `inference.py --help` lists the
+alternative flag pairs (`--roi-weights` + `--roi-config`, etc.) if
+you'd rather pass paths directly.
 
 ## Models
+
+### Nodule (two-stage: ROI → bbox → nodule)
 
 | Config    | Architecture                | Params  | Batch | Split           | Epochs | Best val Dice ‡  | Recall | Precision |
 |-----------|-----------------------------|---------|-------|-----------------|--------|-------------------|--------|-----------|
@@ -58,9 +78,30 @@ training pipeline uses). The output nodule mask is written as
 | `v7.yaml` | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` †     | 1000   | **0.589**        | 0.774  | 0.693     |
 | `v9.yaml` | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | 0.538            | 0.662  | 0.648     |
 
-All three use the same shared training recipe: Focal Tversky + weighted
-CE (α=0.3, β=0.7, γ=2.0, λ_ce=0.1, ce_nod=100), Adam (lr=1e-5, wd=1e-5),
-CosineAnnealingLR (T_max=epochs, η_min=1e-6), bf16 AMP, seed 42.
+### Joint end-to-end (single 3-class model, no bbox stage)
+
+| Config                            | Architecture          | Params  | Batch | Split               | Best mIoU (3-cls) | Lung Dice | Nodule Dice |
+|-----------------------------------|-----------------------|---------|-------|---------------------|------------------:|----------:|------------:|
+| `joint_segresnet_ex_lidc.yaml`    | SegResNet             | 20.7 M  | 4     | `unified_v2_ex_lidc`|      0.8147       |   0.9814  |    0.6546   |
+| `joint_segresnet_pseudo.yaml`     | SegResNet             | 20.7 M  | 4     | `unified_v2`        |      0.8057       |   0.9754  |    0.6421   |
+| `joint_dynunet_ex_lidc.yaml`      | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2_ex_lidc`|    **0.8213**     |   0.9800  |  **0.6752** |
+| `joint_dynunet_pseudo.yaml`       | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2`        |      0.8031       |   0.9746  |    0.6364   |
+
+The `ex_lidc` variants train only on NLST + NSCLC (they have GT lung
+labels). The `pseudo` variants add LIDC-IDRI back in, using the trained
+2D SegResNet ROI model as pseudo-GT for LIDC's missing lung labels.
+Across both architectures, **`ex_lidc` outperforms `pseudo`** — the
+pseudo-labels' noise slightly hurts the lung head's supervision signal
+and the added LIDC diversity does not compensate. Full metric
+breakdowns (mIoU, Accuracy, per-class Precision/Recall, per-case Dice
+distribution) are in [`reports/joint/`](reports/joint/).
+
+All seven 3D configs use the same shared training recipe: Focal Tversky
+(α=0.3, β=0.7, γ=2.0) + weighted CE (λ_ce=0.1, nodule class weight 100),
+Adam (lr=1e-5, wd=1e-5), CosineAnnealingLR (T_max=epochs, η_min=1e-6),
+bf16 AMP, seed 42. The nodule variants use a 2-class softmax head; the
+joint variants use a 3-class softmax head and a K-class generalisation
+of the same loss.
 
 **† Note on splits.** v6 and v9 are retrained on the balanced
 `unified_v2.json` split (the same split used to train the ROI model), so
@@ -93,9 +134,14 @@ well.**
 $DATA_ROOT/
   ct_3d/<series_uid>.npz               ['data']  (1, H, W, D)  float32 [0,1]
   nodule_sem_seg_3d/<series_uid>.npz   ['data']  (1, H, W, D)  binary   {0,1}
+  # optional, extra for ROI + joint training:
+  ct_2d/<series_uid>_<NNNN>.npz        ['data']  (1, H, W)     float32 [0,1]
+  roi_sem_seg_2d/<series_uid>_<NNNN>.npz ['data'] (1, H, W)    binary   {0,1}
+  # produced by scripts/build_lung_3d.py, required for joint training:
+  lung_sem_seg_3d/<series_uid>.npz     ['data']  (1, H, W, D)  binary   {0,1}
 ```
 
-Both file series use the same series-UID basenames. The train/val split
+All file series use the same series-UID basenames. The train/val split
 JSONs and the per-series lung bboxes are bundled in this repo — see below.
 
 ## Bundled artifacts
@@ -103,8 +149,11 @@ JSONs and the per-series lung bboxes are bundled in this repo — see below.
 - `data/splits/unified.json` — original 70/15/15 patient-grouped
   train/val/test split (1609 / 345 / 351 series). Used by v7 only.
 - `data/splits/unified_v2.json` — balanced re-split (1683 / 297 / 325
-  series). Used by v6, v9, and the ROI model. This is the split the paper
-  reports on.
+  series). Used by v6, v9, ROI, and the joint `pseudo` variants. This
+  is the split the paper reports on.
+- `data/splits/unified_v2_ex_lidc.json` — same split with LIDC-IDRI
+  filtered out (1110 / 196 / 129 series). Used by the joint `ex_lidc`
+  variants.
 - `processed/bboxes_unified.json` — per-series lung bboxes. NLST + NSCLC
   cases use bboxes derived from the ground-truth 2D lung ROI labels; LIDC
   cases (which lack ROI labels) use bboxes from the frozen medium nodule
@@ -116,13 +165,17 @@ with, so reproduction is byte-for-byte deterministic (given the seed).
 **Trained checkpoints are hosted separately on HuggingFace** (private
 during paper review — request access if you need them):
 
-| Model  | HuggingFace repo |
-|--------|------------------|
-| ROI SegResNet 2D          | [Kakimaki00/roi-segresnet-2d](https://huggingface.co/Kakimaki00/roi-segresnet-2d) |
-| ROI SwinUNETR 2D          | [Kakimaki00/roi-swinunetr-2d](https://huggingface.co/Kakimaki00/roi-swinunetr-2d) |
-| Nodule SegResNet 3D (v6)  | [Kakimaki00/nodule-segresnet-3d-small](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) |
-| Nodule SegResNet 3D (v7)  | [Kakimaki00/nodule-segresnet-3d-wide](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide) |
-| Nodule DynUNet 3D (v9)    | [Kakimaki00/nodule-dynunet-3d](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) |
+| Task        | Model                              | HuggingFace repo |
+|-------------|------------------------------------|------------------|
+| ROI (2D)    | SegResNet                          | [Kakimaki00/roi-segresnet-2d](https://huggingface.co/Kakimaki00/roi-segresnet-2d) |
+| ROI (2D)    | SwinUNETR (small)                  | [Kakimaki00/roi-swinunetr-2d](https://huggingface.co/Kakimaki00/roi-swinunetr-2d) |
+| Nodule (3D) | SegResNet, small (v6)              | [Kakimaki00/nodule-segresnet-3d-small](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) |
+| Nodule (3D) | SegResNet, wide (v7 — paper's best)| [Kakimaki00/nodule-segresnet-3d-wide](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide) |
+| Nodule (3D) | DynUNet / 3D U-Net (v9)            | [Kakimaki00/nodule-dynunet-3d](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) |
+| Joint (3D)  | SegResNet, ex-LIDC                 | [Kakimaki00/joint-segresnet-3d-ex-lidc](https://huggingface.co/Kakimaki00/joint-segresnet-3d-ex-lidc) |
+| Joint (3D)  | SegResNet, pseudo-LIDC             | [Kakimaki00/joint-segresnet-3d-pseudo-lidc](https://huggingface.co/Kakimaki00/joint-segresnet-3d-pseudo-lidc) |
+| Joint (3D)  | DynUNet, ex-LIDC (best joint)      | [Kakimaki00/joint-dynunet-3d-ex-lidc](https://huggingface.co/Kakimaki00/joint-dynunet-3d-ex-lidc) |
+| Joint (3D)  | DynUNet, pseudo-LIDC               | [Kakimaki00/joint-dynunet-3d-pseudo-lidc](https://huggingface.co/Kakimaki00/joint-dynunet-3d-pseudo-lidc) |
 
 Each HF repo contains `model.pth` (weights-only, `torch.save`d
 state_dict), the exact `config.yaml` used at training time, and a model
@@ -194,22 +247,78 @@ rather than continuing the exact original schedule. For inference-only
 use this is fine; for continuing a training run, use the internal
 full-checkpoint path instead.
 
+## Joint end-to-end training
+
+The four `joint_*.yaml` configs train a single 3-class model
+{bg, lung, nodule} directly on the full CT — no ROI stage, no bbox
+crop. Two data variants:
+
+- **`ex_lidc`** — NLST + NSCLC only. Lung labels are ground-truth (2D
+  masks in `roi_sem_seg_2d/`, stacked into 3D per series).
+- **`pseudo`**  — full corpus (adds LIDC-IDRI). LIDC lacks GT lung
+  labels, so they are produced by running the trained 2D SegResNet ROI
+  model on each LIDC slice as pseudo-GT.
+
+Both variants read a per-series 3D lung mask from
+`$DATA_ROOT/lung_sem_seg_3d/`. That directory is **not bundled** — it
+depends on your CT corpus, and (for LIDC) on the ROI model — so
+generate it locally once before joint training:
+
+```bash
+huggingface-cli download Kakimaki00/roi-segresnet-2d --local-dir ./ckpts/roi
+export DATA_ROOT=/path/to/unified
+
+python scripts/build_lung_3d.py \
+    --data-root         $DATA_ROOT \
+    --out-dir           $DATA_ROOT/lung_sem_seg_3d \
+    --roi-config        ./ckpts/roi/config.yaml \
+    --roi-checkpoint    ./ckpts/roi/model.pth \
+    --split-in          data/splits/unified_v2.json \
+    --split-out-ex-lidc data/splits/unified_v2_ex_lidc.json \
+    --manifest-out      lung_source_manifest.json
+```
+
+This takes ~1 h on an H100 (mostly LIDC inference). The bundled
+`data/splits/unified_v2_ex_lidc.json` is the exact output of this
+script — regenerating it will overwrite it byte-for-byte.
+
+Then train:
+
+```bash
+python train.py --config configs/joint_dynunet_ex_lidc.yaml    # best joint model
+python train.py --config configs/joint_segresnet_ex_lidc.yaml
+python train.py --config configs/joint_dynunet_pseudo.yaml
+python train.py --config configs/joint_segresnet_pseudo.yaml
+```
+
+Evaluate:
+
+```bash
+python eval_metrics_joint.py \
+    --config configs/joint_dynunet_ex_lidc.yaml \
+    --ckpt   checkpoints/joint_dynunet_ex_lidc/best_model.pth
+```
+
 ## Files
 
 ```
-train.py                       training loop (Adam + cosine LR, bf16, ckpt save/resume)
-inference.py                   end-to-end ROI → bbox → nodule pipeline on a raw CT
-eval_roi.py                    ROI evaluation: mIoU / Accuracy / Precision / Recall
-model.py                       architecture dispatch (SegResNet / DynUNet / SwinUNETR)
-loss.py                        FocalTverskyCELoss + DiceLoss + build_loss factory
-dataset.py                     NoduleFineCropDataset + Roi2DDataset + factory
-transforms.py                  train / val transform pipelines
-configs/{v6,v7,v9}.yaml        one per nodule model variant
-configs/{roi,roi_swin}.yaml    ROI (2D lung foreground) training configs
-data/splits/unified.json       v1 split (used by v7)
-data/splits/unified_v2.json    v2 balanced split (used by v6, v9, ROI)
-processed/bboxes_unified.json  bundled per-series lung bboxes
-reports/                       markdown + PDF metric reports (one per model)
+train.py                            training loop (Adam + cosine LR, bf16, ckpt save/resume)
+inference.py                        two-stage OR joint inference on a raw CT
+eval_roi.py                         ROI evaluation: mIoU / Accuracy / Precision / Recall
+eval_metrics_joint.py               joint (3-class) evaluation, same metric set
+model.py                            architecture dispatch (SegResNet / DynUNet / SwinUNETR)
+loss.py                             FocalTverskyCELoss (2-cls) + MulticlassFocalTverskyCELoss (K-cls) + DiceLoss
+dataset.py                          NoduleFineCropDataset + Roi2DDataset + JointFullVolumeDataset
+transforms.py                       train / val transform pipelines
+configs/{v6,v7,v9}.yaml             two-stage nodule configs
+configs/{roi,roi_swin}.yaml         2D ROI configs
+configs/joint_*.yaml                joint (end-to-end) configs (4)
+scripts/build_lung_3d.py            preprocessing for joint training (writes lung_sem_seg_3d/)
+data/splits/unified.json            v1 split (used by v7)
+data/splits/unified_v2.json         v2 balanced split (used by v6, v9, ROI, joint pseudo)
+data/splits/unified_v2_ex_lidc.json v2 split with LIDC filtered out (used by joint ex_lidc)
+processed/bboxes_unified.json       bundled per-series lung bboxes
+reports/                            markdown + PDF metric reports (one per model)
 requirements.txt
 ```
 
@@ -217,13 +326,17 @@ requirements.txt
 
 Wall-clock on a single H100 94 GB:
 
-| Config          | Epoch time | Full run |
-|-----------------|-----------:|---------:|
-| v6 (400)        |  ~13 min   |  ~3.5 d  |
-| v7 (1000)       |  ~18 min   | ~12 d    |
-| v9 (400)        |  ~13 min   |  ~3.5 d  |
-| roi (100)       |   ~5 min   |  ~8 h    |
-| roi_swin (100)  |  ~18 min   |  ~30 h   |
+| Config                            | Epoch time | Full run |
+|-----------------------------------|-----------:|---------:|
+| v6 (400)                          |  ~13 min   |  ~3.5 d  |
+| v7 (1000)                         |  ~18 min   | ~12 d    |
+| v9 (400)                          |  ~13 min   |  ~3.5 d  |
+| roi (100)                         |   ~5 min   |  ~8 h    |
+| roi_swin (100)                    |  ~18 min   |  ~30 h   |
+| joint_segresnet_ex_lidc (400)     |  ~13 min   |  ~3.5 d  |
+| joint_segresnet_pseudo (400)      |  ~19 min   |  ~5 d    |
+| joint_dynunet_ex_lidc (400)       |  ~13 min   |  ~3.5 d  |
+| joint_dynunet_pseudo (400)        |  ~19 min   |  ~5 d    |
 
 Training writes:
 - `checkpoints/<v>/best_model.pth` — best val-Dice checkpoint

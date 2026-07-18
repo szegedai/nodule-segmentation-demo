@@ -1,20 +1,29 @@
-"""Two-task training loop — trains either the 2D ROI or the 3D nodule model.
+"""Three-task training loop — trains ROI (2D lung), nodule (3D cropped
+bbox, 2-class), or joint end-to-end (3D full volume, 3-class).
 
-The task is chosen by the `task:` field in the YAML config (roi or nodule).
+The task is chosen by the `task:` field in the YAML config
+(roi | nodule | joint).
 
 Nodule pipeline (v6, v7, v9):
     - 3D SegResNet / DynUNet (out_channels=2, softmax)
     - FocalTverskyCE loss
     - Val metric = softmax→argmax→one-hot Dice; also nodule sens/prec/detection
 
-ROI pipeline (roi.yaml):
-    - 2D SegResNet (out_channels=1, sigmoid)
+ROI pipeline (roi.yaml, roi_swin.yaml):
+    - 2D SegResNet / SwinUNETR (out_channels=1, sigmoid)
     - DiceLoss(sigmoid=True, squared_pred=True)
     - Val metric = sigmoid→threshold Dice; also foreground sens/prec
+
+Joint pipeline (joint_*.yaml):
+    - 3D SegResNet / DynUNet (out_channels=3, softmax) — no bbox crop
+    - MulticlassFocalTverskyCELoss
+    - Val metric = softmax→argmax→one-hot Dice (mean of lung + nodule); also
+      nodule sens/prec/detection
 
 Usage:
     export DATA_ROOT=/path/to/unified
     python train.py --config configs/v7.yaml           # first run
+    python train.py --config configs/joint_dynunet_ex_lidc.yaml
     python train.py --config configs/v7.yaml --resume  # resume from last.pth
 """
 from __future__ import annotations
@@ -118,12 +127,42 @@ class RoiPostproc:
         return pred, labels, pred[:, 0], labels[:, 0]
 
 
-def make_postproc(task):
-    return NodulePostproc() if task == "nodule" else RoiPostproc()
+class JointPostproc:
+    """3-class softmax → argmax → one-hot. Foreground channel used for TP/FP/FN
+    tracking is the *nodule* channel (class 2) — the sparse, clinically
+    important class. DiceMetric(include_background=False) will average lung +
+    nodule Dice per case."""
+
+    def __init__(self, num_classes: int = 3, foreground_class: int = 2):
+        self.num_classes      = num_classes
+        self.foreground_class = foreground_class
+        self.post_pred  = AsDiscrete(argmax=True, to_onehot=num_classes)
+        self.post_label = AsDiscrete(to_onehot=num_classes)
+
+    def label_to_device(self, labels, device):
+        return labels.long().to(device)
+
+    def metric_inputs(self, logits, labels):
+        preds_oh  = torch.stack([self.post_pred(logits[i])  for i in range(len(logits))])
+        labels_oh = torch.stack([self.post_label(labels[i]) for i in range(len(labels))])
+        fg = self.foreground_class
+        return preds_oh, labels_oh, preds_oh[:, fg], labels_oh[:, fg]
+
+
+def make_postproc(task, cfg=None):
+    if task == "nodule":
+        return NodulePostproc()
+    if task == "roi":
+        return RoiPostproc()
+    if task == "joint":
+        C = int((cfg or {}).get("model", {}).get("out_channels", 3))
+        return JointPostproc(num_classes=C, foreground_class=C - 1)
+    raise ValueError(f"unknown task: {task!r}")
 
 
 def make_dice_metric(task):
     # Nodule: 2-ch onehot, skip background. ROI: 1-ch, count it.
+    # Joint : 3-ch onehot, skip background → mean of (lung, nodule) Dice.
     include_bg = (task == "roi")
     return DiceMetric(include_background=include_bg, reduction="mean")
 
@@ -131,10 +170,10 @@ def make_dice_metric(task):
 # ── validation ───────────────────────────────────────────────────────────────
 
 @torch.no_grad()
-def validate(task, model, loader, criterion, device):
+def validate(task, model, loader, criterion, device, cfg=None):
     """Return dict of val metrics. Task-shape aware."""
     model.eval()
-    post = make_postproc(task)
+    post = make_postproc(task, cfg=cfg)
     metric = make_dice_metric(task)
 
     total_loss = 0.0; n_batches = 0
@@ -184,15 +223,18 @@ def main():
     args = parse_args()
     cfg  = load_config(args.config)
     task = cfg.get("task", "nodule")
-    if task not in ("nodule", "roi"):
-        raise SystemExit(f"config task must be 'nodule' or 'roi', got {task!r}")
+    if task not in ("nodule", "roi", "joint"):
+        raise SystemExit(f"config task must be 'nodule', 'roi', or 'joint', got {task!r}")
 
     set_determinism(seed=cfg["training"]["seed"])
     device = torch.device(cfg["training"]["device"] if torch.cuda.is_available() else "cpu")
 
-    title = ("Stage 2 Fine — Nodule Training (256³ crop, 2-class)"
-             if task == "nodule"
-             else "Stage 1 — ROI Training (2D axial slice, binary lung mask)")
+    if task == "nodule":
+        title = "Stage 2 Fine — Nodule Training (256³ crop, 2-class)"
+    elif task == "roi":
+        title = "Stage 1 — ROI Training (2D axial slice, binary lung mask)"
+    else:
+        title = "Stage 3 Joint — Full-Volume Training (256³, 3-class softmax)"
     print(f"\n{'='*60}")
     print(f"  {title}")
     print(f"  Device: {device}   Epochs: {cfg['training']['epochs']}")
@@ -260,7 +302,7 @@ def main():
     val_interval = cfg["training"]["val_interval"]
     save_every   = cfg["checkpoints"]["save_every"]
 
-    post = make_postproc(task)
+    post = make_postproc(task, cfg=cfg)
     train_metric = make_dice_metric(task)
 
     # ── training loop ───────────────────────────────────────────────────────
@@ -312,7 +354,7 @@ def main():
         print(f"│  TRAIN  loss={train_loss:.4f}   dice={train_dice:.4f}", flush=True)
 
         if (epoch + 1) % val_interval == 0 or epoch == max_epochs - 1:
-            m = validate(task, model, val_loader, criterion, device)
+            m = validate(task, model, val_loader, criterion, device, cfg=cfg)
             writer.add_scalar("Loss/val",       m["loss"], epoch)
             writer.add_scalar("Dice/val",       m["dice"], epoch)
             writer.add_scalar("Val/sensitivity", m["sens"] if m["sens"] == m["sens"] else 0.0, epoch)
@@ -321,7 +363,7 @@ def main():
             is_best = m["dice"] > best_dice
             best_tag = "   ← BEST" if is_best else ""
             _f = lambda v: f"{v:.4f}" if v == v else "n/a"
-            det_str = f"   det={m['n_detected']}/{m['n_with_pos']}" if task == "nodule" else ""
+            det_str = f"   det={m['n_detected']}/{m['n_with_pos']}" if task in ("nodule", "joint") else ""
             print(f"│  VAL    loss={m['loss']:.4f}   dice={m['dice']:.4f}"
                   f"   sens={_f(m['sens'])}   prec={_f(m['prec'])}{det_str}{best_tag}",
                   flush=True)

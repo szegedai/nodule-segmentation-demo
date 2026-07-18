@@ -1,17 +1,19 @@
-"""End-to-end nodule inference: raw CT → nodule mask via ROI + nodule models.
+"""End-to-end nodule inference from a raw CT volume.
 
-Two-stage pipeline that mirrors the training preprocessing exactly:
+Two pipelines supported:
 
-    1. Load a raw CT volume (npz, {'data': (1, H, W, D) float32 in [0, 1]}).
-    2. Run the 2D ROI model slice-by-slice → per-slice lung mask → stacked
-       into a 3D lung mask at native resolution.
-    3. Derive a 3D lung bounding box from that mask (+ padding).
-    4. Crop the CT to the bbox and resample to 256³ (trilinear).
-    5. Run the 3D nodule model on the 256³ crop → argmax → binary nodule
-       mask at 256³.
-    6. Resample the nodule mask back to bbox size (nearest) and place it
-       into an (H, W, D) full-frame canvas of zeros.
-    7. Save as {'data': (1, H, W, D) uint8}.
+  (A) Two-stage: ROI → bbox → nodule (matches how v6/v7/v9 were trained)
+       1. Load a raw CT volume.
+       2. Run the 2D ROI model slice-by-slice → per-slice lung masks → 3D stack.
+       3. Derive a 3D lung bounding box (+ padding).
+       4. Crop + resample to 256³ (trilinear).
+       5. Run the 3D nodule model → argmax → binary nodule mask.
+       6. Resample back to bbox → embed in full frame. Save as {0, 1}.
+
+  (B) Joint single-stage: full CT → 3-class mask directly (joint_*.yaml)
+       1. Resample the whole CT to 256³ (trilinear).
+       2. Run the 3-class joint model → argmax → {0=bg, 1=lung, 2=nodule}.
+       3. Resample back to (H, W, D). Save as {0, 1, 2}.
 
 Model checkpoints are expected to be either
   (a) local path to a .pth file (flat state_dict or wrapped) plus a
@@ -20,15 +22,23 @@ Model checkpoints are expected to be either
       layout `huggingface-cli download` produces when pulling one of the
       companion HF repos.
 
-Example:
+Examples:
 
-    huggingface-cli download Kakimaki00/roi-swinunetr-2d       --local-dir ./ckpts/roi
+    # Two-stage
+    huggingface-cli download Kakimaki00/roi-swinunetr-2d         --local-dir ./ckpts/roi
     huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide --local-dir ./ckpts/nodule
     python inference.py \\
         --ct         path/to/case.npz \\
         --roi-dir    ./ckpts/roi \\
         --nodule-dir ./ckpts/nodule \\
         --output     nodule_mask.npz
+
+    # Joint end-to-end
+    huggingface-cli download Kakimaki00/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
+    python inference.py \\
+        --ct        path/to/case.npz \\
+        --joint-dir ./ckpts/joint \\
+        --output    joint_mask.npz
 """
 
 import argparse
@@ -128,6 +138,25 @@ def compute_bbox(mask3d, padding, min_lung_voxels=1000):
 
 
 @torch.no_grad()
+def run_joint(model, ct3d, device, size=256):
+    """CT (H, W, D) → 3-class label (H, W, D) uint8 in {0=bg, 1=lung, 2=nodule}.
+
+    The joint model was trained on 256³ full-volume resamples of the CT
+    (no bbox crop); we mirror that preprocessing exactly.
+    """
+    H, W, D = ct3d.shape
+    x = torch.from_numpy(ct3d).unsqueeze(0).unsqueeze(0).float()      # (1, 1, H, W, D)
+    x = F.interpolate(x, size=(size, size, size),
+                      mode="trilinear", align_corners=False).to(device)
+
+    logits = model(x)                                    # (1, 3, s, s, s)
+    pred_small = logits.argmax(dim=1, keepdim=True).float()   # (1, 1, s, s, s)
+    pred_full = F.interpolate(pred_small, size=(H, W, D),
+                              mode="nearest").squeeze().to(torch.uint8).cpu().numpy()
+    return pred_full
+
+
+@torch.no_grad()
 def run_nodule(model, ct3d, bbox, device, nod_size=256):
     """CT (H, W, D) + bbox → full-frame nodule mask (H, W, D) uint8.
 
@@ -159,36 +188,26 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--ct", required=True,
                     help="input CT npz with 'data' key of shape (1, H, W, D), float32 in [0, 1]")
+    # Two-stage pipeline (ROI → bbox → nodule)
     ap.add_argument("--roi-dir",     help="directory containing config.yaml + model.pth (from `huggingface-cli download`)")
     ap.add_argument("--roi-weights", help="alternative to --roi-dir: path to model.pth")
     ap.add_argument("--roi-config",  help="alternative to --roi-dir: path to config.yaml")
-    ap.add_argument("--nodule-dir",     help="directory containing config.yaml + model.pth (from `huggingface-cli download`)")
+    ap.add_argument("--nodule-dir",     help="directory containing config.yaml + model.pth")
     ap.add_argument("--nodule-weights", help="alternative to --nodule-dir: path to model.pth")
     ap.add_argument("--nodule-config",  help="alternative to --nodule-dir: path to config.yaml")
-    ap.add_argument("--output", required=True, help="output nodule mask npz")
+    # Single-stage joint pipeline
+    ap.add_argument("--joint-dir",     help="directory containing config.yaml + model.pth for a joint 3-class model. "
+                                            "When set, --roi-* and --nodule-* are ignored.")
+    ap.add_argument("--joint-weights", help="alternative to --joint-dir: path to model.pth")
+    ap.add_argument("--joint-config",  help="alternative to --joint-dir: path to config.yaml")
+
+    ap.add_argument("--output", required=True,
+                    help="output mask npz. Two-stage: binary nodule mask {0,1}. "
+                         "Joint: 3-class label {0=bg, 1=lung, 2=nodule}.")
     ap.add_argument("--bbox-padding", type=int, default=20)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--roi-batch", type=int, default=32, help="batch size for ROI stage")
     args = ap.parse_args()
-
-    # Resolve model paths.
-    if args.roi_dir:
-        roi_cfg_path, roi_w_path = resolve_model_paths(args.roi_dir, args.roi_config)
-    elif args.roi_weights:
-        if not args.roi_config:
-            sys.exit("--roi-config required when using --roi-weights")
-        roi_cfg_path, roi_w_path = args.roi_config, args.roi_weights
-    else:
-        sys.exit("provide either --roi-dir or (--roi-weights + --roi-config)")
-
-    if args.nodule_dir:
-        nod_cfg_path, nod_w_path = resolve_model_paths(args.nodule_dir, args.nodule_config)
-    elif args.nodule_weights:
-        if not args.nodule_config:
-            sys.exit("--nodule-config required when using --nodule-weights")
-        nod_cfg_path, nod_w_path = args.nodule_config, args.nodule_weights
-    else:
-        sys.exit("provide either --nodule-dir or (--nodule-weights + --nodule-config)")
 
     device = torch.device(args.device)
     print(f"device: {device}", flush=True)
@@ -202,6 +221,56 @@ def main():
         sys.exit(f"expected CT shape (1, H, W, D), got {ct.shape}")
     ct3d = ct[0].astype(np.float32)                       # (H, W, D)
     print(f"CT:      shape={ct.shape}  dtype={ct.dtype}  range=[{ct3d.min():.3f}, {ct3d.max():.3f}]", flush=True)
+
+    out_path = Path(args.output)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # ── joint (single-model) path ───────────────────────────────────────────
+    if args.joint_dir or args.joint_weights:
+        if args.joint_dir:
+            joint_cfg_path, joint_w_path = resolve_model_paths(args.joint_dir, args.joint_config)
+        else:
+            if not args.joint_config:
+                sys.exit("--joint-config required when using --joint-weights")
+            joint_cfg_path, joint_w_path = args.joint_config, args.joint_weights
+
+        joint_cfg = load_config(joint_cfg_path)
+        joint_model = build_model(joint_cfg["model"]).to(device).eval()
+        load_weights(joint_model, joint_w_path)
+        joint_size = tuple(joint_cfg.get("preprocessing", {}).get("target_size", [256, 256, 256]))
+        print(f"joint:   {joint_cfg['model'].get('name', 'segresnet')}  "
+              f"({sum(p.numel() for p in joint_model.parameters())/1e6:.1f} M params)", flush=True)
+
+        label_mask = run_joint(joint_model, ct3d, device, size=joint_size[0])
+        n_lung   = int((label_mask == 1).sum())
+        n_nodule = int((label_mask == 2).sum())
+        n_total  = int(label_mask.size)
+        print(f"         lung voxels:   {n_lung:,}  ({100 * n_lung / n_total:.2f} %)", flush=True)
+        print(f"         nodule voxels: {n_nodule:,}  ({100 * n_nodule / n_total:.4f} %)", flush=True)
+
+        np.savez_compressed(out_path, data=label_mask[None])   # (1, H, W, D) uint8 in {0, 1, 2}
+        print(f"wrote → {out_path}   (3-class label)", flush=True)
+        return
+
+    # ── two-stage path (ROI → bbox → nodule) ────────────────────────────────
+    # Resolve model paths.
+    if args.roi_dir:
+        roi_cfg_path, roi_w_path = resolve_model_paths(args.roi_dir, args.roi_config)
+    elif args.roi_weights:
+        if not args.roi_config:
+            sys.exit("--roi-config required when using --roi-weights")
+        roi_cfg_path, roi_w_path = args.roi_config, args.roi_weights
+    else:
+        sys.exit("provide --joint-dir, --roi-dir, or (--roi-weights + --roi-config)")
+
+    if args.nodule_dir:
+        nod_cfg_path, nod_w_path = resolve_model_paths(args.nodule_dir, args.nodule_config)
+    elif args.nodule_weights:
+        if not args.nodule_config:
+            sys.exit("--nodule-config required when using --nodule-weights")
+        nod_cfg_path, nod_w_path = args.nodule_config, args.nodule_weights
+    else:
+        sys.exit("provide either --nodule-dir or (--nodule-weights + --nodule-config)")
 
     # ── ROI stage ─────────────────────────────────────────────────────────────
     roi_cfg = load_config(roi_cfg_path)
@@ -240,8 +309,6 @@ def main():
           f"({100 * nodule_mask.mean():.4f} % of volume)", flush=True)
 
     # Save.
-    out_path = Path(args.output)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     np.savez_compressed(out_path, data=nodule_mask[None])   # (1, H, W, D) uint8
     print(f"wrote → {out_path}", flush=True)
 
