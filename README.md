@@ -305,6 +305,7 @@ python eval_metrics_joint.py \
 train.py                            training loop (Adam + cosine LR, bf16, ckpt save/resume)
 inference.py                        two-stage OR joint inference on a raw CT
 eval_roi.py                         ROI evaluation: mIoU / Accuracy / Precision / Recall
+eval_metrics_nodule.py              two-stage nodule evaluation, same metric set
 eval_metrics_joint.py               joint (3-class) evaluation, same metric set
 model.py                            architecture dispatch (SegResNet / DynUNet / SwinUNETR)
 loss.py                             FocalTverskyCELoss (2-cls) + MulticlassFocalTverskyCELoss (K-cls) + DiceLoss
