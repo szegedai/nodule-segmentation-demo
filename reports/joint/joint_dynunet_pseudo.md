@@ -69,10 +69,12 @@ Best checkpoint (evaluated below): **epoch 234 / 400**.
 
 ## 5. Evaluation protocol
 
-Evaluated on the val split (297 series, never seen during training).
-Predictions taken as `argmax` over the 3-channel softmax output. All
-per-voxel metrics are micro-averaged over the whole split
-(4,982,833,152 voxels total).
+**Held-out test split** (325 series). The training loop used the
+`val` split for early stopping and best-Dice checkpoint selection; the
+numbers below come from the completely untouched **`test`** split
+(never seen during training or model selection). Predictions taken as
+`argmax` over the 3-channel softmax output. All per-voxel metrics are
+micro-averaged over the whole test split (5,452,595,200 voxels total).
 
 ## 6. Results
 
@@ -80,29 +82,29 @@ per-voxel metrics are micro-averaged over the whole split
 
 | Metric | Value |
 |--------|-----:|
-| **mean IoU** (all 3 classes)   | **0.8031** |
-| **mean IoU** (lung + nodule)   | **0.7086** |
-| **Accuracy**                   | **0.9931** |
-| **Precision** (macro, all classes) | **0.8651** |
-| **Precision** (macro, non-bg)  | **0.7988** |
-| **Recall** (macro, all classes)    | **0.8730** |
-| **Recall** (macro, non-bg)     | **0.8124** |
+| **mean IoU** (all 3 classes)   | **0.7886** |
+| **mean IoU** (lung + nodule)   | **0.6870** |
+| **Accuracy**                   | **0.9928** |
+| **Precision** (macro, all classes) | **0.8163** |
+| **Precision** (macro, non-bg)  | **0.7257** |
+| **Recall** (macro, all classes)    | **0.9196** |
+| **Recall** (macro, non-bg)     | **0.8821** |
 
 ### Per-class breakdown
 
 | Class      | IoU    | Precision | Recall | Dice (micro) |
 |------------|-------:|----------:|-------:|-------------:|
-| Background | 0.9921 | 0.9977    | 0.9944 | 0.9961 |
-| Lung       | 0.9505 | 0.9642    | 0.9854 | 0.9746 |
-| Nodule     | 0.4667 | 0.6335    | 0.6394 | 0.6364 |
+| Background | 0.9920 | 0.9974    | 0.9945 | 0.9960 |
+| Lung       | 0.9398 | 0.9585    | 0.9796 | 0.9689 |
+| Nodule     | 0.4341 | 0.4929    | 0.7846 | 0.6054 |
 
-### Per-case Dice distribution (per class, 297 val cases)
+### Per-case Dice distribution (per class, 325 val cases)
 
 | Class    | Mean   | Std    | p25    | Median | p75    |
 |----------|-------:|-------:|-------:|-------:|-------:|
-| Background | 0.9960 | 0.0025 | 0.9954 | 0.9962 | 0.9968 |
-| Lung     | 0.9713 | 0.0176 | 0.9651 | 0.9746 | 0.9819 |
-| Nodule   | 0.4937 | 0.2499 | 0.3147 | 0.5341 | 0.7028 |
+| Background | 0.9959 | 0.0017 | 0.9947 | 0.9959 | 0.9972 |
+| Lung     | 0.9657 | 0.0134 | 0.9620 | 0.9675 | 0.9722 |
+| Nodule   | 0.4834 | 0.2668 | 0.2734 | 0.4979 | 0.7223 |
 
 ## 7. Notes on interpretation
 
@@ -171,8 +173,8 @@ need a lung-bbox crop — feed it the whole CT resampled to 256³.
 ## 9. Reproducibility
 
 - Config       `configs/joint_dynunet_pseudo.yaml`
-- Checkpoint   `stage3_joint/checkpoints_dynunet_pseudo/best_model.pth`
-- Metrics JSON `stage3_joint/checkpoints_dynunet_pseudo/eval_metrics_joint.json`
-- Command      `python stage3_joint/eval_metrics.py --config configs/joint_dynunet_pseudo.yaml --checkpoint stage3_joint/checkpoints_dynunet_pseudo/best_model.pth`
+- Checkpoint   `checkpoints/joint_dynunet_pseudo/best_model.pth`
+- Metrics JSON `checkpoints/joint_dynunet_pseudo/eval_metrics_joint_test.json`
+- Command      `python eval_metrics_joint.py --config configs/joint_dynunet_pseudo.yaml --ckpt checkpoints/joint_dynunet_pseudo/best_model.pth --split test`
 
 Companion variant: [`Kakimaki00/joint-dynunet-3d-ex-lidc`](https://huggingface.co/Kakimaki00/joint-dynunet-3d-ex-lidc) — same architecture, ex-LIDC data variant.

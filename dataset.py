@@ -208,6 +208,41 @@ def build_splits_for_nodule(cfg):
     return train_keys, val_keys
 
 
+def nodule_split_keys(cfg, split_name):
+    """Return keys of one named split ('train' | 'val' | 'test'), bbox-filtered."""
+    with open(cfg["data"]["bbox_json"]) as f:
+        bboxes = json.load(f)
+    split = load_split(cfg["data"]["split_json"])
+    if split_name not in split:
+        raise ValueError(f"split JSON has no {split_name!r} entry; keys={list(split)}")
+    return [k for k in split[split_name] if k in bboxes]
+
+
+def build_eval_dataset(task, cfg, val_transform, split_name="val"):
+    """Return a single dataset for the requested split ('train' | 'val' | 'test').
+    Uses the val-style transform (no augmentation)."""
+    if task == "nodule":
+        keys = nodule_split_keys(cfg, split_name)
+        return NoduleFineCropDataset(cfg["data"]["datasets"], cfg["data"]["bbox_json"],
+                                     transform=val_transform, filenames=keys)
+    if task == "roi":
+        split = load_split(cfg["data"]["split_json"])
+        if split_name not in split:
+            raise ValueError(f"split JSON has no {split_name!r} entry; keys={list(split)}")
+        uids   = series_uids_from_split(split[split_name])
+        root   = cfg["data"]["data_root"]
+        target = cfg["preprocessing"]["target_size"]
+        return Roi2DDataset(root, uids, target_size=target, transform=val_transform)
+    if task == "joint":
+        split = load_split(cfg["data"]["split_json"])
+        if split_name not in split:
+            raise ValueError(f"split JSON has no {split_name!r} entry; keys={list(split)}")
+        return JointFullVolumeDataset(cfg["data"]["datasets"],
+                                      transform=val_transform,
+                                      filenames=split[split_name])
+    raise ValueError(f"unknown task: {task!r}")
+
+
 # ── task-aware factory ────────────────────────────────────────────────────────
 
 def build_datasets(task, cfg, train_transform, val_transform):

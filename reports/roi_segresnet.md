@@ -68,11 +68,13 @@ returns.
 
 ## 5. Evaluation protocol
 
-Evaluated on the `unified_v2` **validation** split (64 097 slices across
-297 series, never seen during training). Predictions taken as
-`sigmoid(logits) > 0.5`. All metrics are computed at the pixel level and
-micro-averaged over the whole split (each of ~4.2 × 10⁹ pixels
-contributes equally).
+**Held-out test split** (45 751 slices from the `unified_v2` test set).
+The training loop used the `val` split for early stopping and
+best-Dice checkpoint selection; the numbers below come from the
+completely untouched **`test`** split (never seen during training or
+model selection). Predictions taken as `sigmoid(logits) > 0.5`. All
+metrics are computed at the pixel level and micro-averaged over the
+whole test split (~3.0 × 10⁹ pixels).
 
 ## 6. Results
 
@@ -80,36 +82,36 @@ contributes equally).
 
 | Metric             | Value      |
 |--------------------|-----------:|
-| **mean IoU**       | **0.9803** |
-| **Accuracy**       | **0.9953** |
-| **Precision**      | **0.9797** |
-| **Recall**         | **0.9857** |
+| **mean IoU**       | **0.9704** |
+| **Accuracy**       | **0.9957** |
+| **Precision**      | **0.9662** |
+| **Recall**         | **0.9778** |
 
 ### Supplementary
 
 | Metric                          | Value      |
 |---------------------------------|-----------:|
-| IoU (foreground / lung class)   | 0.9660 |
-| IoU (background class)          | 0.9946 |
-| Dice / F1 (micro)               | 0.9827 |
-| True positives  (px)            | 557 532 918 |
-| False positives (px)            | 11 556 324 |
-| False negatives (px)            | 8 068 708 |
-| True negatives  (px)            | 3 623 503 042 |
+| IoU (foreground / lung class)   | 0.9455 |
+| IoU (background class)          | 0.9953 |
+| Dice / F1 (micro)               | 0.9720 |
+| True positives  (px)            | 225 652 517 |
+| False positives (px)            | 7 887 800 |
+| False negatives (px)            | 5 127 517 |
+| True negatives  (px)            | 2 759 669 702 |
 
-### Per-slice Dice distribution (64 097 val slices)
+### Per-slice Dice distribution (45 751 test slices)
 
 | Statistic | Value  |
 |-----------|-------:|
-| Mean      | 0.8909 |
-| Std       | 0.2697 |
+| Mean      | 0.7851 |
+| Std       | 0.3747 |
 | Min       | 0.0000 |
 | p05       | 0.0000 |
-| Median    | 0.9874 |
+| Median    | 0.9770 |
 | p95       | 1.0000 |
 | Max       | 1.0000 |
 
-The mean-vs-median gap (0.89 vs 0.99) is driven by top-/bottom-of-volume
+The mean-vs-median gap (0.79 vs 0.98) is driven by top-/bottom-of-volume
 slices where the lung is absent: a single false-positive pixel there
 maps to Dice = 0, dragging the mean. The aggregate voxel-level metrics
 (mIoU / Precision / Recall / Dice_micro) are not affected — they weight
@@ -122,12 +124,12 @@ target is a large, contrast-rich region with relatively simple
 morphology. As a result all four ticket metrics land near their upper
 bound, which is expected rather than a bug:
 
-- **Accuracy 0.9953** — informative here (unlike the nodule task) because
+- **Accuracy 0.9957** — informative here (unlike the nodule task) because
   the class ratio is roughly 40 / 60, not 10⁻⁵.
-- **mIoU 0.9803** — genuinely a mean of two comparable IoUs (0.966 fg,
+- **mIoU 0.9704** — genuinely a mean of two comparable IoUs (0.946 fg,
   0.995 bg), not dominated by one term.
-- **Precision 0.9797** — 98 % of predicted-lung pixels are true lung.
-- **Recall 0.9857** — 99 % of true-lung pixels are recovered.
+- **Precision 0.9662** — 97 % of predicted-lung pixels are true lung.
+- **Recall 0.9778** — 98 % of true-lung pixels are recovered.
 
 For a segmentation task this cleanly separated, the operationally
 meaningful comparison across models is at the tails of the per-slice
@@ -138,5 +140,5 @@ the mean.
 
 - Config       `configs/roi.yaml`
 - Checkpoint   `checkpoints/roi/best.pth`
-- Metrics JSON `checkpoints/roi/eval_segresnet.json`
-- Command      `python eval_roi.py --config configs/roi.yaml --ckpt checkpoints/roi/best.pth`
+- Metrics JSON `checkpoints/roi/eval_segresnet_test.json`
+- Command      `python eval_roi.py --config configs/roi.yaml --ckpt checkpoints/roi/best.pth --split test`

@@ -24,7 +24,7 @@ import yaml
 from torch.utils.data import DataLoader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dataset    import build_datasets
+from dataset    import build_eval_dataset
 from model      import build_model, count_parameters
 from transforms import build_transforms
 
@@ -143,6 +143,8 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--ckpt",   required=True)
     ap.add_argument("--output", default=None)
+    ap.add_argument("--split",  default="val", choices=["train", "val", "test"],
+                    help="Which split to evaluate on (default: val).")
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
@@ -155,10 +157,10 @@ def main():
     print(f"device: {device}", flush=True)
 
     train_tf, val_tf = build_transforms(task, cfg)
-    _, val_ds = build_datasets(task, cfg, train_tf, val_tf)
-    print(f"val cases: {len(val_ds):,}", flush=True)
+    eval_ds = build_eval_dataset(task, cfg, val_tf, split_name=args.split)
+    print(f"{args.split} cases: {len(eval_ds):,}", flush=True)
 
-    val_loader = DataLoader(val_ds, batch_size=1, shuffle=False,
+    val_loader = DataLoader(eval_ds, batch_size=1, shuffle=False,
                             num_workers=args.workers, pin_memory=True)
 
     model = build_model(cfg["model"]).to(device).eval()
@@ -176,14 +178,15 @@ def main():
     m["_meta"] = {
         "config":       args.config,
         "checkpoint":   args.ckpt,
+        "eval_split":   args.split,
         "epoch":        ep,
         "model_name":   cfg["model"].get("name", "segresnet"),
         "params":       count_parameters(model),
-        "split":        cfg["data"].get("split_json"),
+        "split_json":   cfg["data"].get("split_json"),
     }
 
     print("\n" + "=" * 60)
-    print(f"  Joint eval — {cfg['model'].get('name', 'segresnet')}")
+    print(f"  Joint eval — {cfg['model'].get('name', 'segresnet')}   split={args.split}")
     print(f"  checkpoint: {args.ckpt}")
     print("=" * 60)
     print(f"  val cases:      {m['n_cases']:,}")
@@ -202,7 +205,7 @@ def main():
               f"Dice(micro)={p['Dice_micro']:.4f}   "
               f"Dice(per-case): mean={d['mean']:.4f} median={d['median']:.4f}")
 
-    out = args.output or str(Path(args.ckpt).parent / "eval_metrics_joint.json")
+    out = args.output or str(Path(args.ckpt).parent / f"eval_metrics_joint_{args.split}.json")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text(json.dumps(m, indent=2))
     print(f"\nWrote metrics → {out}")

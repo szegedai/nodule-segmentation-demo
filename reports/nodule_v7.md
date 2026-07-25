@@ -63,11 +63,14 @@ Best checkpoint (evaluated below): **epoch 544 / 1000**.
 
 ## 5. Evaluation protocol
 
-Evaluated on the `unified` val split (345 series,
-never seen during training). Predictions taken as `argmax` over the
-2-channel softmax output; foreground = class 1. All metrics are computed
-at the voxel level and micro-averaged over the whole split
-(5,788,139,520 voxels total).
+**Held-out test split** (351 series). The training loop used the
+`val` split of `unified` for early stopping and best-Dice
+checkpoint selection; the numbers below come from the completely
+untouched **`test`** split (never seen during training or model
+selection). Predictions taken as `argmax` over the 2-channel softmax
+output; foreground = class 1. All metrics are computed at the voxel
+level and micro-averaged over the whole test split (5,888,802,816
+voxels total).
 
 ## 6. Results
 
@@ -75,32 +78,32 @@ at the voxel level and micro-averaged over the whole split
 
 | Metric             | Value |
 |--------------------|------:|
-| **mean IoU**       | **0.7879** |
-| **Accuracy**       | **0.9995** |
-| **Precision**      | **0.6926** |
-| **Recall**         | **0.7743** |
+| **mean IoU**       | **0.7402** |
+| **Accuracy**       | **0.9996** |
+| **Precision**      | **0.6465** |
+| **Recall**         | **0.6525** |
 
 ### Supplementary
 
 | Metric                          | Value  |
 |---------------------------------|-------:|
-| IoU (foreground / nodule class) | 0.5763 |
-| IoU (background class)          | 0.9995 |
-| Dice / F1 (micro)               | 0.7312 |
+| IoU (foreground / nodule class) | 0.4809 |
+| IoU (background class)          | 0.9996 |
+| Dice / F1 (micro)               | 0.6495 |
 
-### Per-case Dice distribution (345 val cases)
+### Per-case Dice distribution (351 val cases)
 
 | Statistic | Value |
 |-----------|------:|
-| Mean      | 0.5886 |
-| Std       | 0.2345 |
+| Mean      | 0.5634 |
+| Std       | 0.2576 |
 | Min       | 0.0000 |
-| p05       | 0.0804 |
-| p25       | 0.4560 |
-| Median    | 0.6526 |
-| p75       | 0.7711 |
-| p95       | 0.8589 |
-| Max       | 0.9399 |
+| p05       | 0.0033 |
+| p25       | 0.3916 |
+| Median    | 0.6308 |
+| p75       | 0.7833 |
+| p95       | 0.8652 |
+| Max       | 0.9330 |
 
 ## 7. Notes on interpretation
 
@@ -108,20 +111,20 @@ Nodule segmentation is severely class-imbalanced (~10⁻⁵ of voxels are
 nodule), which distorts the standard metric set:
 
 - **Accuracy** is trivially near 1.0 for any reasonable model — the
-  model gets ≈ 99.9544 % of voxels right by predicting
+  model gets ≈ 99.9556 % of voxels right by predicting
   "background" almost everywhere. Uninformative on its own here.
 - **mIoU** averages the foreground and background IoU. `IoU_background`
   is essentially 1.0, so mIoU is roughly `0.5 + 0.5 · IoU_nodule`. The
-  useful signal is in `IoU_nodule` (0.5763) and Dice / F1
-  (0.7312).
+  useful signal is in `IoU_nodule` (0.4809) and Dice / F1
+  (0.6495).
 - **Precision / Recall** are the standard per-voxel figures — no
-  imbalance caveat needed. Recall 0.7743 means the model
-  correctly labels ~77 % of nodule voxels;
-  Precision 0.6926 means ~69 % of
+  imbalance caveat needed. Recall 0.6525 means the model
+  correctly labels ~65 % of nodule voxels;
+  Precision 0.6465 means ~65 % of
   predicted-nodule voxels are true nodule.
 
-Per-case Dice mean (0.5886) is lower than the micro Dice
-(0.7312) because large nodules dominate the micro
+Per-case Dice mean (0.5634) is lower than the micro Dice
+(0.6495) because large nodules dominate the micro
 average; per-case Dice weights each patient equally regardless of
 nodule size. Clinically the per-case distribution is the more useful
 summary.
@@ -172,8 +175,8 @@ or use the demo's `inference.py` which chains them for you.
 
 - Config       `configs/v7.yaml`
 - Checkpoint   `checkpoints/v7/best_model.pth`
-- Metrics JSON `checkpoints/v7/eval_metrics_nodule.json`
-- Command      `python eval_metrics_nodule.py --config configs/v7.yaml --ckpt checkpoints/v7/best_model.pth`
+- Metrics JSON `checkpoints/v7/eval_metrics_nodule_test.json`
+- Command      `python eval_metrics_nodule.py --config configs/v7.yaml --ckpt checkpoints/v7/best_model.pth --split test`
 
 Companion two-stage nodule models on HuggingFace:
 

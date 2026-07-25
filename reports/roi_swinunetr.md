@@ -76,11 +76,13 @@ reported numbers by more than ±0.001.
 
 ## 5. Evaluation protocol
 
-Evaluated on the `unified_v2` **validation** split (64 097 slices across
-297 series, never seen during training). Predictions taken as
-`sigmoid(logits) > 0.5`. All metrics are computed at the pixel level and
-micro-averaged over the whole split (each of ~4.2 × 10⁹ pixels
-contributes equally).
+**Held-out test split** (45 751 slices from the `unified_v2` test set).
+The training loop used the `val` split for early stopping and best-Dice
+checkpoint selection; the numbers below come from the completely
+untouched **`test`** split (never seen during training or model
+selection). Predictions taken as `sigmoid(logits) > 0.5`. All metrics
+are computed at the pixel level and micro-averaged over the whole test
+split (~3.0 × 10⁹ pixels).
 
 ## 6. Results
 
@@ -88,38 +90,38 @@ contributes equally).
 
 | Metric             | Value      |
 |--------------------|-----------:|
-| **mean IoU**       | **0.9848** |
-| **Accuracy**       | **0.9964** |
-| **Precision**      | **0.9858** |
-| **Recall**         | **0.9876** |
+| **mean IoU**       | **0.9829** |
+| **Accuracy**       | **0.9975** |
+| **Precision**      | **0.9830** |
+| **Recall**         | **0.9849** |
 
 ### Supplementary
 
 | Metric                          | Value      |
 |---------------------------------|-----------:|
-| IoU (foreground / lung class)   | 0.9738 |
-| IoU (background class)          | 0.9959 |
-| Dice / F1 (micro)               | 0.9867 |
-| True positives  (px)            | 558 598 242 |
-| False positives (px)            | 8 020 130 |
-| False negatives (px)            | 7 003 384 |
-| True negatives  (px)            | 3 627 039 236 |
+| IoU (foreground / lung class)   | 0.9684 |
+| IoU (background class)          | 0.9973 |
+| Dice / F1 (micro)               | 0.9839 |
+| True positives  (px)            | 227 296 038 |
+| False positives (px)            | 3 937 060 |
+| False negatives (px)            | 3 483 996 |
+| True negatives  (px)            | 2 763 620 442 |
 
-### Per-slice Dice distribution (64 097 val slices)
+### Per-slice Dice distribution (45 751 test slices)
 
 | Statistic | Value  |
 |-----------|-------:|
-| Mean      | 0.9609 |
-| Std       | 0.1268 |
+| Mean      | 0.9592 |
+| Std       | 0.1240 |
 | Min       | 0.0000 |
-| p05       | 0.8754 |
-| Median    | 0.9908 |
+| p05       | 0.8574 |
+| Median    | 0.9888 |
 | p95       | 1.0000 |
 | Max       | 1.0000 |
 
 Compared to the SegResNet baseline the tails of the per-slice
-distribution improve noticeably: p05 rises from 0.00 to 0.88 and the
-per-slice mean jumps from 0.89 to 0.96. In practical terms, the
+distribution improve noticeably: p05 rises from 0.00 to 0.86 and the
+per-slice mean jumps from 0.79 to 0.96. In practical terms, the
 top-/bottom-of-volume slices where the lung is absent or barely present
 are handled more conservatively (fewer speculative predictions), which
 is where the SegResNet baseline was losing most of its per-slice score.
@@ -127,18 +129,18 @@ is where the SegResNet baseline was losing most of its per-slice score.
 ## 7. Comparison with SegResNet baseline
 
 Both models trained on the same split, same augmentation-free pipeline,
-same batch size, same epoch budget, same eval protocol. Only the model
-family and the LR differ.
+same batch size, same epoch budget, same eval protocol; both evaluated
+on the same held-out test set. Only the model family and the LR differ.
 
 | Metric              | SegResNet (6.9 M) | **SwinUNETR (6.3 M)** | Δ |
 |---------------------|------------------:|----------------------:|---:|
-| mIoU                | 0.9803            | **0.9848**            | +0.0045 |
-| Accuracy            | 0.9953            | **0.9964**            | +0.0011 |
-| Precision           | 0.9797            | **0.9858**            | +0.0061 |
-| Recall              | 0.9857            | **0.9876**            | +0.0019 |
-| Dice (micro)        | 0.9827            | **0.9867**            | +0.0040 |
-| Dice per slice mean | 0.8909            | **0.9609**            | +0.0700 |
-| Dice per slice p05  | 0.0000            | **0.8754**            | +0.8754 |
+| mIoU                | 0.9704            | **0.9829**            | +0.0125 |
+| Accuracy            | 0.9957            | **0.9975**            | +0.0018 |
+| Precision           | 0.9662            | **0.9830**            | +0.0168 |
+| Recall              | 0.9778            | **0.9849**            | +0.0071 |
+| Dice (micro)        | 0.9720            | **0.9839**            | +0.0119 |
+| Dice per slice mean | 0.7851            | **0.9592**            | +0.1741 |
+| Dice per slice p05  | 0.0000            | **0.8574**            | +0.8574 |
 
 SwinUNETR wins on every reported metric. The largest gain is in the
 per-slice tail (p05), suggesting the transformer's global receptive
@@ -152,21 +154,21 @@ target is a large, contrast-rich region with relatively simple
 morphology. All four ticket metrics land near their upper bound, which
 is expected rather than a bug:
 
-- **Accuracy 0.9964** — informative here (unlike the nodule task)
+- **Accuracy 0.9975** — informative here (unlike the nodule task)
   because the class ratio is roughly 40 / 60, not 10⁻⁵.
-- **mIoU 0.9848** — genuinely a mean of two comparable IoUs (0.974 fg,
-  0.996 bg).
-- **Precision 0.9858** — 99 % of predicted-lung pixels are true lung.
-- **Recall 0.9876** — 99 % of true-lung pixels are recovered.
+- **mIoU 0.9829** — genuinely a mean of two comparable IoUs (0.968 fg,
+  0.997 bg).
+- **Precision 0.9830** — 98 % of predicted-lung pixels are true lung.
+- **Recall 0.9849** — 98 % of true-lung pixels are recovered.
 
-Because both models are past the 0.98 mark, the most operationally
-meaningful comparison is at the tails of the per-slice distribution
-(p05) — which is where SwinUNETR shows a real, not just marginal,
-improvement over the CNN baseline.
+Because both models are past the 0.97 mark on the test set, the most
+operationally meaningful comparison is at the tails of the per-slice
+distribution (p05) — which is where SwinUNETR shows a real, not just
+marginal, improvement over the CNN baseline.
 
 ## 9. Reproducibility
 
 - Config       `configs/roi_swin.yaml`
 - Checkpoint   `checkpoints/roi_swin/best_model.pth`
-- Metrics JSON `checkpoints/roi_swin/eval_swinunetr.json`
-- Command      `python eval_roi.py --config configs/roi_swin.yaml --ckpt checkpoints/roi_swin/best_model.pth`
+- Metrics JSON `checkpoints/roi_swin/eval_swinunetr_test.json`
+- Command      `python eval_roi.py --config configs/roi_swin.yaml --ckpt checkpoints/roi_swin/best_model.pth --split test`

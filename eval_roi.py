@@ -27,8 +27,8 @@ import torch
 import yaml
 from torch.utils.data import DataLoader
 
-from dataset   import build_datasets
-from model     import build_model
+from dataset    import build_datasets, build_eval_dataset
+from model      import build_model
 from transforms import build_transforms
 
 
@@ -130,6 +130,8 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--ckpt",   required=True)
     ap.add_argument("--output", default=None, help="Where to write JSON metrics (default: alongside ckpt)")
+    ap.add_argument("--split",   default="val", choices=["train", "val", "test"],
+                    help="Which split to evaluate on (default: val).")
     ap.add_argument("--batch",  type=int, default=None, help="override batch size for eval")
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
@@ -143,11 +145,11 @@ def main():
     print(f"device: {device}", flush=True)
 
     train_tf, val_tf = build_transforms(task, cfg)
-    _, val_ds = build_datasets(task, cfg, train_tf, val_tf)
-    print(f"val slices: {len(val_ds):,}", flush=True)
+    eval_ds = build_eval_dataset(task, cfg, val_tf, split_name=args.split)
+    print(f"{args.split} slices: {len(eval_ds):,}", flush=True)
 
     batch = args.batch or cfg.get("training", {}).get("batch_size", 16)
-    val_loader = DataLoader(val_ds, batch_size=batch, shuffle=False,
+    val_loader = DataLoader(eval_ds, batch_size=batch, shuffle=False,
                             num_workers=args.workers, pin_memory=True)
 
     model = build_model(cfg["model"]).to(device)
@@ -162,6 +164,7 @@ def main():
     metrics["_meta"] = {
         "config":       args.config,
         "checkpoint":   args.ckpt,
+        "split":        args.split,
         "epoch":        ep,
         "val_dice_at_save": val,
         "model_name":   cfg["model"].get("name"),
@@ -169,7 +172,7 @@ def main():
     }
 
     print("\n" + "=" * 60)
-    print(f"  ROI eval — {cfg['model'].get('name')}  ({args.ckpt})")
+    print(f"  ROI eval — {cfg['model'].get('name')}  ({args.ckpt})   split={args.split}")
     print("=" * 60)
     print(f"  slices evaluated:   {metrics['n_slices']:,}")
     print(f"  pixels evaluated:   {metrics['n_pixels']:,}")
@@ -188,7 +191,8 @@ def main():
     print(f"                      p05={d['p05']:.4f}  p95={d['p95']:.4f}")
 
     if args.output is None:
-        args.output = str(Path(args.ckpt).with_suffix("").parent / f"eval_{cfg['model'].get('name')}.json")
+        args.output = str(Path(args.ckpt).with_suffix("").parent
+                          / f"eval_{cfg['model'].get('name')}_{args.split}.json")
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(metrics, indent=2))
     print(f"\nWrote metrics → {args.output}")

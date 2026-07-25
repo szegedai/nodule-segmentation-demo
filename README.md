@@ -70,22 +70,26 @@ you'd rather pass paths directly.
 
 ## Models
 
+All numbers below are on the held-out **test split** (see §Metric
+aggregation‡). The val split was used only for early stopping and
+best-checkpoint selection during training.
+
 ### Nodule (two-stage: ROI → bbox → nodule)
 
-| Config    | Architecture                | Params  | Batch | Split           | Epochs | Best val Dice ‡  | Recall | Precision |
-|-----------|-----------------------------|---------|-------|-----------------|--------|-------------------|--------|-----------|
-| `v6.yaml` | SegResNet (init_filters=16) | 20.7 M  | 4     | `unified_v2`    | 400    | 0.525            | 0.743  | 0.608     |
-| `v7.yaml` | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` †     | 1000   | **0.589**        | 0.774  | 0.693     |
-| `v9.yaml` | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | 0.538            | 0.662  | 0.648     |
+| Config    | Architecture                | Params  | Batch | Split           | Epochs | Test mIoU | Test Recall | Test Precision |
+|-----------|-----------------------------|---------|-------|-----------------|--------|----------:|------------:|---------------:|
+| `v6.yaml` | SegResNet (init_filters=16) | 20.7 M  | 4     | `unified_v2`    | 400    |    0.7391 |       0.812 |          0.539 |
+| `v7.yaml` | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` †     | 1000   |    0.7402 |       0.652 |          0.647 |
+| `v9.yaml` | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | **0.7594**|       0.757 |          0.624 |
 
 ### Joint end-to-end (single 3-class model, no bbox stage)
 
-| Config                            | Architecture          | Params  | Batch | Split               | Best mIoU (3-cls) | Lung Dice | Nodule Dice |
+| Config                            | Architecture          | Params  | Batch | Split               | Test mIoU (3-cls) | Lung Dice | Nodule Dice |
 |-----------------------------------|-----------------------|---------|-------|---------------------|------------------:|----------:|------------:|
-| `joint_segresnet_ex_lidc.yaml`    | SegResNet             | 20.7 M  | 4     | `unified_v2_ex_lidc`|      0.8147       |   0.9814  |    0.6546   |
-| `joint_segresnet_pseudo.yaml`     | SegResNet             | 20.7 M  | 4     | `unified_v2`        |      0.8057       |   0.9754  |    0.6421   |
-| `joint_dynunet_ex_lidc.yaml`      | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2_ex_lidc`|    **0.8213**     |   0.9800  |  **0.6752** |
-| `joint_dynunet_pseudo.yaml`       | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2`        |      0.8031       |   0.9746  |    0.6364   |
+| `joint_segresnet_ex_lidc.yaml`    | SegResNet             | 20.7 M  | 4     | `unified_v2_ex_lidc`|    **0.8240**     |   0.9768  |  **0.6856** |
+| `joint_segresnet_pseudo.yaml`     | SegResNet             | 20.7 M  | 4     | `unified_v2`        |      0.8102       |   0.9694  |    0.6647   |
+| `joint_dynunet_ex_lidc.yaml`      | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2_ex_lidc`|      0.8016       |   0.9762  |    0.6261   |
+| `joint_dynunet_pseudo.yaml`       | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2`        |      0.7886       |   0.9682  |    0.6027   |
 
 The `ex_lidc` variants train only on NLST + NSCLC (they have GT lung
 labels). The `pseudo` variants add LIDC-IDRI back in, using the trained
@@ -93,7 +97,7 @@ labels). The `pseudo` variants add LIDC-IDRI back in, using the trained
 Across both architectures, **`ex_lidc` outperforms `pseudo`** — the
 pseudo-labels' noise slightly hurts the lung head's supervision signal
 and the added LIDC diversity does not compensate. Full metric
-breakdowns (mIoU, Accuracy, per-class Precision/Recall, per-case Dice
+breakdowns (Accuracy, per-class Precision/Recall, per-case Dice
 distribution) are in [`reports/joint/`](reports/joint/).
 
 All seven 3D configs use the same shared training recipe: Focal Tversky
@@ -112,12 +116,20 @@ at epoch 545 on the v1 split, well past the 400-epoch budget we use for
 the retrains), we kept the original v7 checkpoint and its `unified.json`
 split. Both split JSONs are bundled here.
 
-**‡ Metric aggregation.** *Best val Dice* is the per-case mean Dice on
-the val split, matching the training loop's `nodule_dice`. *Recall* and
-*Precision* are voxel-level, micro-averaged over the whole val split;
-they are the numbers a strict "per-voxel classifier" reading of the
-model produces. Full metric breakdown (mIoU, per-case distribution) is
-in [`reports/`](reports/).
+**‡ Split methodology.** The corpus is patient-grouped (a given patient
+never appears in more than one of train/val/test) and
+dataset-stratified (NLST, NSCLC, LIDC each get their own train/val/test
+split, concatenated). *Val* was used during training for early stopping
+and best-checkpoint selection, so those numbers would be optimistically
+biased; the tables above and every report in [`reports/`](reports/)
+therefore report on **test only** — a completely held-out split the
+model never saw during training or model selection. All *Recall* /
+*Precision* values are voxel-level, micro-averaged over the whole test
+split. For a full metric breakdown per model (mIoU, Accuracy,
+per-class breakdown, per-case Dice distribution) see the corresponding
+report under `reports/`. Regenerate with `python eval_metrics_nodule.py
+--config <cfg> --ckpt <ckpt> --split test` (or `eval_roi.py` /
+`eval_metrics_joint.py` for the other tasks).
 
 **3D SwinUNETR for the nodule task was tested (`feature_size=48`, 62 M
 params, gradient checkpointing) but underperformed both the wider

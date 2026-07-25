@@ -30,7 +30,7 @@ import yaml
 from torch.utils.data import DataLoader
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dataset    import NoduleFineCropDataset, build_splits_for_nodule
+from dataset    import build_eval_dataset
 from model      import build_model, count_parameters
 from transforms import build_transforms
 
@@ -135,6 +135,8 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--ckpt",   required=True)
     ap.add_argument("--output", default=None)
+    ap.add_argument("--split",  default="val", choices=["train", "val", "test"],
+                    help="Which split to evaluate on (default: val).")
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
@@ -147,12 +149,10 @@ def main():
     print(f"device: {device}", flush=True)
 
     train_tf, val_tf = build_transforms(task, cfg)
-    train_keys, val_keys = build_splits_for_nodule(cfg)
-    val_ds = NoduleFineCropDataset(cfg["data"]["datasets"], cfg["data"]["bbox_json"],
-                                   transform=val_tf, filenames=val_keys)
-    print(f"val cases: {len(val_ds):,}", flush=True)
+    eval_ds = build_eval_dataset(task, cfg, val_tf, split_name=args.split)
+    print(f"{args.split} cases: {len(eval_ds):,}", flush=True)
 
-    val_loader = DataLoader(val_ds, batch_size=1, shuffle=False,
+    val_loader = DataLoader(eval_ds, batch_size=1, shuffle=False,
                             num_workers=args.workers, pin_memory=True)
 
     model = build_model(cfg["model"]).to(device).eval()
@@ -169,14 +169,15 @@ def main():
     m["_meta"] = {
         "config":       args.config,
         "checkpoint":   args.ckpt,
+        "eval_split":   args.split,
         "epoch":        ep,
         "model_name":   cfg["model"].get("name", "segresnet"),
         "params":       count_parameters(model),
-        "split":        cfg["data"].get("split_json"),
+        "split_json":   cfg["data"].get("split_json"),
     }
 
     print("\n" + "=" * 60)
-    print(f"  Nodule eval — {cfg['model'].get('name', 'segresnet')}")
+    print(f"  Nodule eval — {cfg['model'].get('name', 'segresnet')}   split={args.split}")
     print(f"  checkpoint: {args.ckpt}")
     print("=" * 60)
     print(f"  val cases evaluated: {m['n_cases']:,}")
@@ -195,7 +196,7 @@ def main():
     print(f"                       min={d['min']:.4f}  p05={d['p05']:.4f}  p25={d['p25']:.4f}")
     print(f"                       median={d['median']:.4f}  p75={d['p75']:.4f}  p95={d['p95']:.4f}  max={d['max']:.4f}")
 
-    out = args.output or str(Path(args.ckpt).parent / "eval_metrics_nodule.json")
+    out = args.output or str(Path(args.ckpt).parent / f"eval_metrics_nodule_{args.split}.json")
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text(json.dumps(m, indent=2))
     print(f"\nWrote metrics → {out}")
