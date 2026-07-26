@@ -84,12 +84,17 @@ best-checkpoint selection during training.
 
 ### Joint end-to-end (single 3-class model, no bbox stage)
 
-| Config                            | Architecture          | Params  | Batch | Split               | Test mIoU (3-cls) | Lung Dice | Nodule Dice |
-|-----------------------------------|-----------------------|---------|-------|---------------------|------------------:|----------:|------------:|
-| `joint_segresnet_ex_lidc.yaml`    | SegResNet             | 20.7 M  | 4     | `unified_v2_ex_lidc`|    **0.8240**     |   0.9768  |  **0.6856** |
-| `joint_segresnet_pseudo.yaml`     | SegResNet             | 20.7 M  | 4     | `unified_v2`        |      0.8102       |   0.9694  |    0.6647   |
-| `joint_dynunet_ex_lidc.yaml`      | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2_ex_lidc`|      0.8016       |   0.9762  |    0.6261   |
-| `joint_dynunet_pseudo.yaml`       | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2`        |      0.7886       |   0.9682  |    0.6027   |
+Same layout as the nodule table above — *Test Recall* and *Test
+Precision* are for the **nodule** class specifically (the sparse
+class), matching the two-stage numbers. Lung-class P/R sit at ~0.98
+for all four and appear in the individual reports.
+
+| Config                            | Architecture          | Params  | Batch | Split               | Test mIoU (3-cls) | Lung Dice | Nodule Dice | Nodule Recall | Nodule Precision |
+|-----------------------------------|-----------------------|---------|-------|---------------------|------------------:|----------:|------------:|--------------:|-----------------:|
+| `joint_segresnet_ex_lidc.yaml`    | SegResNet             | 20.7 M  | 4     | `unified_v2_ex_lidc`|    **0.8240**     |   0.9768  |  **0.6856** |     0.819     |    **0.590**     |
+| `joint_segresnet_pseudo.yaml`     | SegResNet             | 20.7 M  | 4     | `unified_v2`        |      0.8102       |   0.9694  |    0.6647   |     0.836     |      0.552       |
+| `joint_dynunet_ex_lidc.yaml`      | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2_ex_lidc`|      0.8016       |   0.9762  |    0.6261   |     0.828     |      0.503       |
+| `joint_dynunet_pseudo.yaml`       | DynUNet (3D U-Net)    | 31.2 M  | 2     | `unified_v2`        |      0.7886       |   0.9682  |    0.6027   |     0.785     |      0.493       |
 
 The `ex_lidc` variants train only on NLST + NSCLC (they have GT lung
 labels). The `pseudo` variants add LIDC-IDRI back in, using the trained
