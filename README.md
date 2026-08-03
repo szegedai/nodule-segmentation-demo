@@ -68,6 +68,28 @@ joint output is a 3-class label. `inference.py --help` lists the
 alternative flag pairs (`--roi-weights` + `--roi-config`, etc.) if
 you'd rather pass paths directly.
 
+## HTTP API
+
+A FastAPI wrapper around the two-stage pipeline is under
+[`api/`](api/). It ships the paper's best test-set model combo
+(SwinUNETR ROI + DynUNet v9 nodule) and exposes a `POST /predict`
+endpoint that takes a CT `.npz` and returns a binary nodule-mask
+`.npz`:
+
+```bash
+pip install -r api/requirements.txt      # fastapi + uvicorn + huggingface_hub
+export HF_TOKEN=...                      # for the private model repos
+uvicorn api.server:app --host 0.0.0.0 --port 8000
+```
+
+```bash
+curl -X POST http://localhost:8000/predict \
+     -F "file=@case.npz" -D headers.txt -o nodule_mask.npz
+```
+
+See [`api/README.md`](api/README.md) for full documentation, the
+Python client example, and deployment notes.
+
 ## Models
 
 All numbers below are on the held-out **test split** (see §Metric
@@ -321,6 +343,7 @@ python eval_metrics_joint.py \
 ```
 train.py                            training loop (Adam + cosine LR, bf16, ckpt save/resume)
 inference.py                        two-stage OR joint inference on a raw CT
+api/                                FastAPI HTTP wrapper (POST /predict → nodule mask)
 eval_roi.py                         ROI evaluation: mIoU / Accuracy / Precision / Recall
 eval_metrics_nodule.py              two-stage nodule evaluation, same metric set
 eval_metrics_joint.py               joint (3-class) evaluation, same metric set

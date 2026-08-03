@@ -1,0 +1,7 @@
+# API-specific deps. Install alongside the demo's own requirements.txt:
+#     pip install -r requirements.txt        # from demo root (torch, monai, ...)
+#     pip install -r api/requirements.txt    # then adds the API layer
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+huggingface_hub>=0.24
