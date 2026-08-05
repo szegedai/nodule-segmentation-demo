@@ -5,7 +5,7 @@
 # LIDC-IDRI is excluded from this variant (no GT lung labels available).
 #
 # Reproduces the checkpoint hosted at:
-#   https://huggingface.co/Kakimaki00/joint-segresnet-3d-ex-lidc
+#   https://huggingface.co/szabopeter/joint-segresnet-3d-ex-lidc
 
 task: joint
 

@@ -6,7 +6,7 @@
 # SegResNet (see scripts/build_lung_3d.py).
 #
 # Reproduces the checkpoint hosted at:
-#   https://huggingface.co/Kakimaki00/joint-segresnet-3d-pseudo-lidc
+#   https://huggingface.co/szabopeter/joint-segresnet-3d-pseudo-lidc
 
 task: joint
 

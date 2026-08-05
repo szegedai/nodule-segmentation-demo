@@ -25,8 +25,8 @@ Model checkpoints are expected to be either
 Examples:
 
     # Two-stage
-    huggingface-cli download Kakimaki00/roi-swinunetr-2d         --local-dir ./ckpts/roi
-    huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide --local-dir ./ckpts/nodule
+    huggingface-cli download szabopeter/roi-swinunetr-2d         --local-dir ./ckpts/roi
+    huggingface-cli download szabopeter/nodule-segresnet-3d-wide --local-dir ./ckpts/nodule
     python inference.py \\
         --ct         path/to/case.npz \\
         --roi-dir    ./ckpts/roi \\
@@ -34,7 +34,7 @@ Examples:
         --output     nodule_mask.npz
 
     # Joint end-to-end
-    huggingface-cli download Kakimaki00/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
+    huggingface-cli download szabopeter/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
     python inference.py \\
         --ct        path/to/case.npz \\
         --joint-dir ./ckpts/joint \\

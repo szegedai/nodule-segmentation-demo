@@ -52,8 +52,8 @@ scheduler:
   eta_min: 1.0e-6
 
 checkpoints:
-  dir:        checkpoints/v7
+  dir:        checkpoints/segresnet_wide_v1
   save_every: 50
 
 logging:
-  dir:        runs/v7
+  dir:        runs/segresnet_wide_v1

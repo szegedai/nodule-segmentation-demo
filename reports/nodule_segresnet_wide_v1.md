@@ -1,4 +1,4 @@
-# Lung Nodule Segmentation — SegResNet (3D, v7 — wide, paper's best)
+# Lung Nodule Segmentation — SegResNet 3D — wide, v1 (unified) split (legacy)
 
 ## 1. Task
 
@@ -20,7 +20,7 @@ cropped to a per-series lung bounding box.
 | Spatial dims            | 3 |
 | Input channels          | 1 |
 | Output channels         | 2 (softmax) |
-| Initial feature width   | 32 |
+| Initial feature width   | 32 (wide) |
 | Encoder blocks per level| `[1, 2, 2, 4, 4]` |
 | Decoder blocks per level| `[1, 1, 1, 1]` |
 | Dropout                 | 0.1 |
@@ -28,16 +28,18 @@ cropped to a per-series lung bounding box.
 
 ## 3. Data
 
-Trained on the older `unified` split (patient-grouped, dataset-stratified,
-**full corpus**): NLST + NSCLC + LIDC-IDRI.
+Trained on the **legacy `unified` split** (patient-grouped,
+dataset-stratified, **full corpus**: NLST + NSCLC + LIDC-IDRI).
 
 Split sizes: **1 609 train / 345 val / 351 test (held out)**.
 
-**Note on split.** v6 and v9 were retrained on the balanced `unified_v2`
-split so the whole two-stage pipeline shares a single split with the ROI
-model. v7 kept the original `unified` split because retraining on v2 within
-a 400-epoch budget did not reproduce its peak of 0.589 (originally reached
-at epoch 545 on the v1 split).
+**Note on split.** This model uses the *first-generation* `unified` split.
+Every other two-stage nodule and joint model in the demo uses the newer
+`unified_v2` split, and the two splits have different patient
+assignments. **This model's test-set numbers are NOT directly comparable
+to the numbers of any other model in the demo** — cross-split ranking is
+not valid. Kept as an architectural reference point; see
+`segresnet_wide_v2` for the wide-SegResNet result on the current benchmark.
 
 Class imbalance: nodule voxels are on the order of ~10⁻⁵ of the total,
 which shapes how each metric should be read (§7).
@@ -46,7 +48,7 @@ which shapes how each metric should be read (§7).
 
 | Setting            | Value |
 |--------------------|-------|
-| Loss               | Focal Tversky + weighted CE (α=0.3, β=0.7, γ=2.0, λ_CE=0.1, `ce_nodule_weight` = 100) |
+| Loss               | Focal Tversky + weighted CE (α=0.3, β=0.7, γ=2.0, λ_CE=0.1-0.3, `ce_nodule_weight` = 100) |
 | Optimizer          | Adam |
 | Learning rate      | 1 × 10⁻⁵ |
 | Weight decay       | 1 × 10⁻⁵ |
@@ -132,11 +134,11 @@ summary.
 ## 8. How to load & run inference
 
 Pre-trained weights are hosted at
-[`Kakimaki00/nodule-segresnet-3d-wide`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide). Download and
+[`szabopeter/nodule-segresnet-3d-wide-v1`](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-v1). Download and
 load directly:
 
 ```bash
-huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide --local-dir ./ckpt
+huggingface-cli download szabopeter/nodule-segresnet-3d-wide-v1 --local-dir ./ckpt
 ```
 
 ```python
@@ -167,19 +169,19 @@ with torch.no_grad():
 
 This model expects **lung-bbox-cropped** input. A separate 2D ROI model
 is needed to produce that bbox — see the accompanying ROI checkpoints
-([`Kakimaki00/roi-segresnet-2d`](https://huggingface.co/Kakimaki00/roi-segresnet-2d)
-or [`Kakimaki00/roi-swinunetr-2d`](https://huggingface.co/Kakimaki00/roi-swinunetr-2d)),
+([`szabopeter/roi-segresnet-2d`](https://huggingface.co/szabopeter/roi-segresnet-2d)
+or [`szabopeter/roi-swinunetr-2d`](https://huggingface.co/szabopeter/roi-swinunetr-2d)),
 or use the demo's `inference.py` which chains them for you.
 
 ## 9. Reproducibility
 
-- Config       `configs/v7.yaml`
-- Checkpoint   `checkpoints/v7/best_model.pth`
-- Metrics JSON `checkpoints/v7/eval_metrics_nodule_test.json`
-- Command      `python eval_metrics_nodule.py --config configs/v7.yaml --ckpt checkpoints/v7/best_model.pth --split test`
+- Config       `configs/segresnet_wide_v1.yaml`
+- Checkpoint   `checkpoints/segresnet_wide_v1/best_model.pth`
+- Metrics JSON `checkpoints/segresnet_wide_v1/eval_metrics_nodule_test.json`
+- Command      `python eval_metrics_nodule.py --config configs/segresnet_wide_v1.yaml --ckpt checkpoints/segresnet_wide_v1/best_model.pth --split test`
 
 Companion two-stage nodule models on HuggingFace:
 
-- [`Kakimaki00/nodule-segresnet-3d-small`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) — small SegResNet (v6)
-- [`Kakimaki00/nodule-dynunet-3d`](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) — DynUNet (3D U-Net)
-
+- [`szabopeter/nodule-segresnet-3d-wide-v2`](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-v2) — wide SegResNet on the current v2 benchmark (recommended)
+- [`szabopeter/nodule-segresnet-3d-small`](https://huggingface.co/szabopeter/nodule-segresnet-3d-small) — small SegResNet on v2
+- [`szabopeter/nodule-dynunet-3d`](https://huggingface.co/szabopeter/nodule-dynunet-3d) — DynUNet (3D U-Net) on v2

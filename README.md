@@ -10,7 +10,7 @@ covering all three tasks the paper reports:
 Each bundled config reproduces one of the trained models reported in the
 paper — same model, same loss, same split, same bboxes, same seed. All
 nine trained checkpoints are hosted on HuggingFace under
-[`Kakimaki00`](https://huggingface.co/Kakimaki00).
+[`szabopeter`](https://huggingface.co/szabopeter).
 
 ## Quickstart
 
@@ -40,8 +40,8 @@ Two pipelines supported by `inference.py`:
 pip install huggingface_hub                     # if not already installed
 huggingface-cli login                           # first time only
 
-huggingface-cli download Kakimaki00/roi-swinunetr-2d          --local-dir ./ckpts/roi
-huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide  --local-dir ./ckpts/nodule
+huggingface-cli download szabopeter/roi-swinunetr-2d          --local-dir ./ckpts/roi
+huggingface-cli download szabopeter/nodule-segresnet-3d-wide  --local-dir ./ckpts/nodule
 
 python inference.py \
     --ct         path/to/case.npz \
@@ -53,7 +53,7 @@ python inference.py \
 **Joint end-to-end** (single 3-class model, no bbox stage):
 
 ```bash
-huggingface-cli download Kakimaki00/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
+huggingface-cli download szabopeter/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
 
 python inference.py \
     --ct        path/to/case.npz \
@@ -98,11 +98,12 @@ best-checkpoint selection during training.
 
 ### Nodule (two-stage: ROI → bbox → nodule)
 
-| Config    | Architecture                | Params  | Batch | Split           | Epochs | Test mIoU | Test Recall | Test Precision |
-|-----------|-----------------------------|---------|-------|-----------------|--------|----------:|------------:|---------------:|
-| `v6.yaml` | SegResNet (init_filters=16) | 20.7 M  | 4     | `unified_v2`    | 400    |    0.7391 |       0.812 |          0.539 |
-| `v7.yaml` | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` †     | 1000   |    0.7402 |       0.652 |          0.647 |
-| `v9.yaml` | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | **0.7594**|       0.757 |          0.624 |
+| Config                          | Architecture                | Params  | Batch | Split           | Epochs | Test mIoU | Test Recall | Test Precision |
+|---------------------------------|-----------------------------|---------|-------|-----------------|--------|----------:|------------:|---------------:|
+| `segresnet_small_v2.yaml`       | SegResNet (init_filters=16) | 20.7 M  | 4     | `unified_v2`    | 400    |    0.7391 |       0.812 |          0.539 |
+| `segresnet_wide_v2.yaml`        | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified_v2`    | 1000   |     *TBA* |       *TBA* |          *TBA* |
+| `dynunet_v2.yaml`               | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | **0.7594**|       0.757 |          0.624 |
+| `segresnet_wide_v1.yaml` ‡‡     | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` (legacy) | 1000 |    0.7402 |       0.652 |          0.647 |
 
 ### Joint end-to-end (single 3-class model, no bbox stage)
 
@@ -134,14 +135,15 @@ bf16 AMP, seed 42. The nodule variants use a 2-class softmax head; the
 joint variants use a 3-class softmax head and a K-class generalisation
 of the same loss.
 
-**† Note on splits.** v6 and v9 are retrained on the balanced
-`unified_v2.json` split (the same split used to train the ROI model), so
-the whole pipeline is on a single consistent split. v7 was trained on the
-earlier `unified.json` split before we settled on the v2 split; because
-retraining it risks not reproducing its peak of 0.589 (which was reached
-at epoch 545 on the v1 split, well past the 400-epoch budget we use for
-the retrains), we kept the original v7 checkpoint and its `unified.json`
-split. Both split JSONs are bundled here.
+**‡‡ Note on `segresnet_wide_v1`.** This model was trained on the
+older `unified` split (the "v1" split, 1 609 / 345 / 351). Every other
+two-stage nodule model and every joint model in the demo uses the
+newer `unified_v2` split. The two splits assign patients differently,
+so **`segresnet_wide_v1`'s test-set numbers are not directly
+comparable to any other row in this table** — cross-split ranking is
+not valid. It's retained as an architectural reference point;
+`segresnet_wide_v2` is the equivalent architecture retrained on the
+current benchmark. Both split JSONs are bundled here.
 
 **‡ Split methodology.** The corpus is patient-grouped (a given patient
 never appears in more than one of train/val/test) and
@@ -160,10 +162,10 @@ report under `reports/`. Regenerate with `python eval_metrics_nodule.py
 
 **3D SwinUNETR for the nodule task was tested (`feature_size=48`, 62 M
 params, gradient checkpointing) but underperformed both the wider
-SegResNet (v7: 0.589) and DynUNet (v9), while being ~2.5× slower per
-epoch than either. Not retrained; not reported in the paper. The
-*2D* SwinUNETR appears only in the ROI section below and performs
-well.**
+SegResNet (`segresnet_wide_v1`: 0.589 val Dice) and DynUNet
+(`dynunet_v2`), while being ~2.5× slower per epoch than either. Not
+retrained; not reported in the paper. The *2D* SwinUNETR appears only
+in the ROI section below and performs well.**
 
 ## Data layout
 
@@ -204,17 +206,18 @@ with, so reproduction is byte-for-byte deterministic (given the seed).
 **Trained checkpoints are hosted separately on HuggingFace** (private
 during paper review — request access if you need them):
 
-| Task        | Model                              | HuggingFace repo |
-|-------------|------------------------------------|------------------|
-| ROI (2D)    | SegResNet                          | [Kakimaki00/roi-segresnet-2d](https://huggingface.co/Kakimaki00/roi-segresnet-2d) |
-| ROI (2D)    | SwinUNETR (small)                  | [Kakimaki00/roi-swinunetr-2d](https://huggingface.co/Kakimaki00/roi-swinunetr-2d) |
-| Nodule (3D) | SegResNet, small (v6)              | [Kakimaki00/nodule-segresnet-3d-small](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) |
-| Nodule (3D) | SegResNet, wide (v7 — paper's best)| [Kakimaki00/nodule-segresnet-3d-wide](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide) |
-| Nodule (3D) | DynUNet / 3D U-Net (v9)            | [Kakimaki00/nodule-dynunet-3d](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) |
-| Joint (3D)  | SegResNet, ex-LIDC                 | [Kakimaki00/joint-segresnet-3d-ex-lidc](https://huggingface.co/Kakimaki00/joint-segresnet-3d-ex-lidc) |
-| Joint (3D)  | SegResNet, pseudo-LIDC             | [Kakimaki00/joint-segresnet-3d-pseudo-lidc](https://huggingface.co/Kakimaki00/joint-segresnet-3d-pseudo-lidc) |
-| Joint (3D)  | DynUNet, ex-LIDC (best joint)      | [Kakimaki00/joint-dynunet-3d-ex-lidc](https://huggingface.co/Kakimaki00/joint-dynunet-3d-ex-lidc) |
-| Joint (3D)  | DynUNet, pseudo-LIDC               | [Kakimaki00/joint-dynunet-3d-pseudo-lidc](https://huggingface.co/Kakimaki00/joint-dynunet-3d-pseudo-lidc) |
+| Task        | Model                                    | HuggingFace repo |
+|-------------|------------------------------------------|------------------|
+| ROI (2D)    | SegResNet                                | [szabopeter/roi-segresnet-2d](https://huggingface.co/szabopeter/roi-segresnet-2d) |
+| ROI (2D)    | SwinUNETR (small)                        | [szabopeter/roi-swinunetr-2d](https://huggingface.co/szabopeter/roi-swinunetr-2d) |
+| Nodule (3D) | SegResNet small, v2 split                | [szabopeter/nodule-segresnet-3d-small](https://huggingface.co/szabopeter/nodule-segresnet-3d-small) |
+| Nodule (3D) | SegResNet **wide, v2 split** (paper's best two-stage) | [szabopeter/nodule-segresnet-3d-wide-v2](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-v2) |
+| Nodule (3D) | SegResNet wide, v1 (legacy split)        | [szabopeter/nodule-segresnet-3d-wide-v1](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-v1) |
+| Nodule (3D) | DynUNet / 3D U-Net, v2 split             | [szabopeter/nodule-dynunet-3d](https://huggingface.co/szabopeter/nodule-dynunet-3d) |
+| Joint (3D)  | SegResNet, ex-LIDC                       | [szabopeter/joint-segresnet-3d-ex-lidc](https://huggingface.co/szabopeter/joint-segresnet-3d-ex-lidc) |
+| Joint (3D)  | SegResNet, pseudo-LIDC                   | [szabopeter/joint-segresnet-3d-pseudo-lidc](https://huggingface.co/szabopeter/joint-segresnet-3d-pseudo-lidc) |
+| Joint (3D)  | DynUNet, ex-LIDC (best joint)            | [szabopeter/joint-dynunet-3d-ex-lidc](https://huggingface.co/szabopeter/joint-dynunet-3d-ex-lidc) |
+| Joint (3D)  | DynUNet, pseudo-LIDC                     | [szabopeter/joint-dynunet-3d-pseudo-lidc](https://huggingface.co/szabopeter/joint-dynunet-3d-pseudo-lidc) |
 
 Each HF repo contains `model.pth` (weights-only, `torch.save`d
 state_dict), the exact `config.yaml` used at training time, and a model
@@ -266,17 +269,17 @@ post-proc, plain `DiceLoss`) instead of the 3D nodule path.
 Trained ROI checkpoints are hosted on HuggingFace (private during paper
 review — request access if you need them):
 
-- SegResNet: [Kakimaki00/roi-segresnet-2d](https://huggingface.co/Kakimaki00/roi-segresnet-2d)
-- SwinUNETR: [Kakimaki00/roi-swinunetr-2d](https://huggingface.co/Kakimaki00/roi-swinunetr-2d)
+- SegResNet: [szabopeter/roi-segresnet-2d](https://huggingface.co/szabopeter/roi-segresnet-2d)
+- SwinUNETR: [szabopeter/roi-swinunetr-2d](https://huggingface.co/szabopeter/roi-swinunetr-2d)
 
 Each repo ships `model.pth` (weights-only). To use with `--resume` in
 this repo, download and rename:
 
 ```bash
-huggingface-cli download Kakimaki00/roi-segresnet-2d model.pth --local-dir checkpoints/roi
+huggingface-cli download szabopeter/roi-segresnet-2d model.pth --local-dir checkpoints/roi
 mv checkpoints/roi/model.pth checkpoints/roi/best.pth
 
-huggingface-cli download Kakimaki00/roi-swinunetr-2d model.pth --local-dir checkpoints/roi_swin
+huggingface-cli download szabopeter/roi-swinunetr-2d model.pth --local-dir checkpoints/roi_swin
 mv checkpoints/roi_swin/model.pth checkpoints/roi_swin/best_model.pth
 ```
 
@@ -304,7 +307,7 @@ depends on your CT corpus, and (for LIDC) on the ROI model — so
 generate it locally once before joint training:
 
 ```bash
-huggingface-cli download Kakimaki00/roi-segresnet-2d --local-dir ./ckpts/roi
+huggingface-cli download szabopeter/roi-segresnet-2d --local-dir ./ckpts/roi
 export DATA_ROOT=/path/to/unified
 
 python scripts/build_lung_3d.py \
@@ -351,12 +354,15 @@ model.py                            architecture dispatch (SegResNet / DynUNet /
 loss.py                             FocalTverskyCELoss (2-cls) + MulticlassFocalTverskyCELoss (K-cls) + DiceLoss
 dataset.py                          NoduleFineCropDataset + Roi2DDataset + JointFullVolumeDataset
 transforms.py                       train / val transform pipelines
-configs/{v6,v7,v9}.yaml             two-stage nodule configs
+configs/segresnet_small_v2.yaml     two-stage nodule: small SegResNet on v2
+configs/segresnet_wide_v2.yaml      two-stage nodule: wide SegResNet on v2 (paper's best)
+configs/segresnet_wide_v1.yaml      two-stage nodule: wide SegResNet on legacy v1 split
+configs/dynunet_v2.yaml             two-stage nodule: DynUNet (3D U-Net) on v2
 configs/{roi,roi_swin}.yaml         2D ROI configs
 configs/joint_*.yaml                joint (end-to-end) configs (4)
 scripts/build_lung_3d.py            preprocessing for joint training (writes lung_sem_seg_3d/)
-data/splits/unified.json            v1 split (used by v7)
-data/splits/unified_v2.json         v2 balanced split (used by v6, v9, ROI, joint pseudo)
+data/splits/unified.json            v1 legacy split (used only by segresnet_wide_v1)
+data/splits/unified_v2.json         v2 balanced split (used by everything else + joint pseudo)
 data/splits/unified_v2_ex_lidc.json v2 split with LIDC filtered out (used by joint ex_lidc)
 processed/bboxes_unified.json       bundled per-series lung bboxes
 reports/                            markdown + PDF metric reports (one per model)
@@ -369,15 +375,16 @@ Wall-clock on a single H100 94 GB:
 
 | Config                            | Epoch time | Full run |
 |-----------------------------------|-----------:|---------:|
-| v6 (400)                          |  ~13 min   |  ~3.5 d  |
-| v7 (1000)                         |  ~18 min   | ~12 d    |
-| v9 (400)                          |  ~13 min   |  ~3.5 d  |
-| roi (100)                         |   ~5 min   |  ~8 h    |
-| roi_swin (100)                    |  ~18 min   |  ~30 h   |
-| joint_segresnet_ex_lidc (400)     |  ~13 min   |  ~3.5 d  |
-| joint_segresnet_pseudo (400)      |  ~19 min   |  ~5 d    |
-| joint_dynunet_ex_lidc (400)       |  ~13 min   |  ~3.5 d  |
-| joint_dynunet_pseudo (400)        |  ~19 min   |  ~5 d    |
+| `segresnet_small_v2` (400)        |  ~13 min   |  ~3.5 d  |
+| `segresnet_wide_v2`  (1000)       |  ~18 min   | ~12 d    |
+| `segresnet_wide_v1`  (1000)       |  ~18 min   | ~12 d    |
+| `dynunet_v2`         (400)        |  ~13 min   |  ~3.5 d  |
+| `roi`                (100)        |   ~5 min   |  ~8 h    |
+| `roi_swin`           (100)        |  ~18 min   |  ~30 h   |
+| `joint_segresnet_ex_lidc` (400)   |  ~13 min   |  ~3.5 d  |
+| `joint_segresnet_pseudo`  (400)   |  ~19 min   |  ~5 d    |
+| `joint_dynunet_ex_lidc`   (400)   |  ~13 min   |  ~3.5 d  |
+| `joint_dynunet_pseudo`    (400)   |  ~19 min   |  ~5 d    |
 
 Training writes:
 - `checkpoints/<v>/best_model.pth` — best val-Dice checkpoint

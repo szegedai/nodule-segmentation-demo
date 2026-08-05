@@ -1,8 +1,9 @@
 task: nodule
 
-# v6 — Baseline SegResNet (init_filters=16, ~20 M params).
-# Reproduces the reference model used as the A/B baseline for v7 / v8 / v9.
-# Reported test val_dice: 0.577  (sens 0.757, prec 0.683).
+# v9 — DynUNet (nnU-Net-style self-configuring U-Net, ~31 M params).
+# 6-level U-Net (4³ bottleneck from 256³ via 5× stride-2 downsamples).
+# Highest precision of all four models (0.746).
+# Reported test val_dice: 0.562  (sens 0.679, prec 0.746).
 
 data:
   datasets:
@@ -18,18 +19,20 @@ preprocessing:
   bbox_padding: 20
 
 model:
-  name:         segresnet
+  name:         dynunet
   spatial_dims: 3
   in_channels:  1
   out_channels: 2
-  init_filters: 16
-  blocks_down:  [1, 2, 2, 4, 4]
-  blocks_up:    [1, 1, 1, 1]
-  dropout_prob: 0.1
+  strides: [[1, 1, 1], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]
+  kernel_size: [[3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
+  upsample_kernel_size: [[2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2]]
+  norm_name: instance
+  deep_supervision: false
+  dropout_prob: 0.0
 
 training:
   epochs:       400
-  batch_size:   4
+  batch_size:   2
   lr:           1.0e-5
   weight_decay: 1.0e-5
   val_interval: 5
@@ -52,8 +55,8 @@ scheduler:
   eta_min: 1.0e-6
 
 checkpoints:
-  dir:        checkpoints/v6
+  dir:        checkpoints/dynunet_v2
   save_every: 50
 
 logging:
-  dir:        runs/v6
+  dir:        runs/dynunet_v2
