@@ -3,3 +3,8 @@ runs/
 __pycache__/
 *.pyc
 .venv/
+
+# wide-v1 was retired from the public demo but kept locally for reference
+configs/segresnet_wide_v1.yaml
+reports/nodule_segresnet_wide_v1.md
+reports/nodule_segresnet_wide_v1.pdf

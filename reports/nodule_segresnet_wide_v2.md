@@ -183,4 +183,3 @@ Companion two-stage nodule models on HuggingFace:
 
 - [`Kakimaki00/nodule-segresnet-3d-small`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) — small SegResNet on v2
 - [`Kakimaki00/nodule-dynunet-3d`](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) — DynUNet (3D U-Net) on v2
-- [`Kakimaki00/nodule-segresnet-3d-wide-v1`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide-v1) — wide SegResNet on legacy v1 split

@@ -103,7 +103,6 @@ best-checkpoint selection during training.
 | `segresnet_small_v2.yaml`       | SegResNet (init_filters=16) | 20.7 M  | 4     | `unified_v2`    | 400    |    0.7391 |       0.812 |          0.539 |
 | `segresnet_wide_v2.yaml` §      | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified_v2`    | 1000   |    0.7482 |       0.782 |          0.577 |
 | `dynunet_v2.yaml`               | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | **0.7594**|       0.757 |          0.624 |
-| `segresnet_wide_v1.yaml` ‡‡     | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` (legacy) | 1000 |    0.7402 |       0.652 |          0.647 |
 
 **§ Per-case Dice.** On voxel-level metrics (mIoU / Dice-micro / the
 table above), `dynunet_v2` is the best model on the v2 test set. On
@@ -143,16 +142,6 @@ bf16 AMP, seed 42. The nodule variants use a 2-class softmax head; the
 joint variants use a 3-class softmax head and a K-class generalisation
 of the same loss.
 
-**‡‡ Note on `segresnet_wide_v1`.** This model was trained on the
-older `unified` split (the "v1" split, 1 609 / 345 / 351). Every other
-two-stage nodule model and every joint model in the demo uses the
-newer `unified_v2` split. The two splits assign patients differently,
-so **`segresnet_wide_v1`'s test-set numbers are not directly
-comparable to any other row in this table** — cross-split ranking is
-not valid. It's retained as an architectural reference point;
-`segresnet_wide_v2` is the equivalent architecture retrained on the
-current benchmark. Both split JSONs are bundled here.
-
 **‡ Split methodology.** The corpus is patient-grouped (a given patient
 never appears in more than one of train/val/test) and
 dataset-stratified (NLST, NSCLC, LIDC each get their own train/val/test
@@ -170,10 +159,10 @@ report under `reports/`. Regenerate with `python eval_metrics_nodule.py
 
 **3D SwinUNETR for the nodule task was tested (`feature_size=48`, 62 M
 params, gradient checkpointing) but underperformed both the wider
-SegResNet (`segresnet_wide_v1`: 0.589 val Dice) and DynUNet
-(`dynunet_v2`), while being ~2.5× slower per epoch than either. Not
-retrained; not reported in the paper. The *2D* SwinUNETR appears only
-in the ROI section below and performs well.**
+SegResNet (`segresnet_wide_v2`) and DynUNet (`dynunet_v2`), while
+being ~2.5× slower per epoch than either. Not retrained; not reported
+in the paper. The *2D* SwinUNETR appears only in the ROI section below
+and performs well.**
 
 ## Data layout
 
@@ -195,11 +184,11 @@ JSONs and the per-series lung bboxes are bundled in this repo — see below.
 
 ## Bundled artifacts
 
-- `data/splits/unified.json` — original 70/15/15 patient-grouped
-  train/val/test split (1609 / 345 / 351 series). Used by v7 only.
-- `data/splits/unified_v2.json` — balanced re-split (1683 / 297 / 325
-  series). Used by v6, v9, ROI, and the joint `pseudo` variants. This
-  is the split the paper reports on.
+- `data/splits/unified_v2.json` — balanced patient-grouped train/val/test
+  split (1683 / 297 / 325 series). Used by every bundled model on the
+  full corpus (`segresnet_small_v2`, `segresnet_wide_v2`, `dynunet_v2`,
+  ROI, and the joint `pseudo` variants). This is the split the paper
+  reports on.
 - `data/splits/unified_v2_ex_lidc.json` — same split with LIDC-IDRI
   filtered out (1110 / 196 / 129 series). Used by the joint `ex_lidc`
   variants.
@@ -220,7 +209,6 @@ during paper review — request access if you need them):
 | ROI (2D)    | SwinUNETR (small)                        | [szabopeter/roi-swinunetr-2d](https://huggingface.co/szabopeter/roi-swinunetr-2d) |
 | Nodule (3D) | SegResNet small, v2 split                | [szabopeter/nodule-segresnet-3d-small](https://huggingface.co/szabopeter/nodule-segresnet-3d-small) |
 | Nodule (3D) | SegResNet **wide, v2 split** (paper's best two-stage) | [szabopeter/nodule-segresnet-3d-wide-v2](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-v2) |
-| Nodule (3D) | SegResNet wide, v1 (legacy split)        | [szabopeter/nodule-segresnet-3d-wide-v1](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-v1) |
 | Nodule (3D) | DynUNet / 3D U-Net, v2 split             | [szabopeter/nodule-dynunet-3d](https://huggingface.co/szabopeter/nodule-dynunet-3d) |
 | Joint (3D)  | SegResNet, ex-LIDC                       | [szabopeter/joint-segresnet-3d-ex-lidc](https://huggingface.co/szabopeter/joint-segresnet-3d-ex-lidc) |
 | Joint (3D)  | SegResNet, pseudo-LIDC                   | [szabopeter/joint-segresnet-3d-pseudo-lidc](https://huggingface.co/szabopeter/joint-segresnet-3d-pseudo-lidc) |
@@ -364,13 +352,11 @@ dataset.py                          NoduleFineCropDataset + Roi2DDataset + Joint
 transforms.py                       train / val transform pipelines
 configs/segresnet_small_v2.yaml     two-stage nodule: small SegResNet on v2
 configs/segresnet_wide_v2.yaml      two-stage nodule: wide SegResNet on v2 (paper's best)
-configs/segresnet_wide_v1.yaml      two-stage nodule: wide SegResNet on legacy v1 split
 configs/dynunet_v2.yaml             two-stage nodule: DynUNet (3D U-Net) on v2
 configs/{roi,roi_swin}.yaml         2D ROI configs
 configs/joint_*.yaml                joint (end-to-end) configs (4)
 scripts/build_lung_3d.py            preprocessing for joint training (writes lung_sem_seg_3d/)
-data/splits/unified.json            v1 legacy split (used only by segresnet_wide_v1)
-data/splits/unified_v2.json         v2 balanced split (used by everything else + joint pseudo)
+data/splits/unified_v2.json         v2 balanced split (used by everything except joint ex_lidc)
 data/splits/unified_v2_ex_lidc.json v2 split with LIDC filtered out (used by joint ex_lidc)
 processed/bboxes_unified.json       bundled per-series lung bboxes
 reports/                            markdown + PDF metric reports (one per model)
@@ -385,7 +371,6 @@ Wall-clock on a single H100 94 GB:
 |-----------------------------------|-----------:|---------:|
 | `segresnet_small_v2` (400)        |  ~13 min   |  ~3.5 d  |
 | `segresnet_wide_v2`  (1000)       |  ~18 min   | ~12 d    |
-| `segresnet_wide_v1`  (1000)       |  ~18 min   | ~12 d    |
 | `dynunet_v2`         (400)        |  ~13 min   |  ~3.5 d  |
 | `roi`                (100)        |   ~5 min   |  ~8 h    |
 | `roi_swin`           (100)        |  ~18 min   |  ~30 h   |
