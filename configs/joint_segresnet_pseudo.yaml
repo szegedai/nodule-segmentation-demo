@@ -16,7 +16,7 @@ data:
       ct_dir:     ${DATA_ROOT}/ct_3d
       lung_dir:   ${DATA_ROOT}/lung_sem_seg_3d
       nodule_dir: ${DATA_ROOT}/nodule_sem_seg_3d
-  split_json:  data/splits/unified_v2.json
+  split_json:  data/splits/unified.json
   num_workers: 8
 
 preprocessing:

@@ -34,7 +34,7 @@ mutually-exclusive softmax.
 
 ## 3. Data
 
-Trained on the `unified_v2_ex_lidc` split (patient-grouped,
+Trained on the `unified_ex_lidc` split (patient-grouped,
 dataset-stratified, **LIDC excluded**):
 
 | Source          | Role       |

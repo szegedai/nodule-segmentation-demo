@@ -34,7 +34,7 @@ mutually-exclusive softmax.
 
 ## 3. Data
 
-Trained on the `unified_v2` split (patient-grouped, dataset-stratified,
+Trained on the `unified` split (patient-grouped, dataset-stratified,
 **full corpus**):
 
 | Source          | Role       | Lung labels |

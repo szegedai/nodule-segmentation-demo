@@ -10,7 +10,7 @@ data:
       ct_dir:  ${DATA_ROOT}/ct_3d
       seg_dir: ${DATA_ROOT}/nodule_sem_seg_3d
   bbox_json:   processed/bboxes_unified.json
-  split_json:  data/splits/unified_v2.json
+  split_json:  data/splits/unified.json
   num_workers: 8
 
 preprocessing:
@@ -52,8 +52,8 @@ scheduler:
   eta_min: 1.0e-6
 
 checkpoints:
-  dir:        checkpoints/segresnet_small_v2
+  dir:        checkpoints/segresnet_small
   save_every: 50
 
 logging:
-  dir:        runs/segresnet_small_v2
+  dir:        runs/segresnet_small

@@ -8,3 +8,6 @@ __pycache__/
 configs/segresnet_wide_v1.yaml
 reports/nodule_segresnet_wide_v1.md
 reports/nodule_segresnet_wide_v1.pdf
+
+# legacy 70/15/15 split — retained locally, not shipped
+data/splits/unified_v1_legacy.json

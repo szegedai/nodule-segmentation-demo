@@ -38,7 +38,7 @@ Unified training corpus assembled from three public sources:
 | NSCLC-Radiomics | training + validation |
 | LIDC-IDRI  | training + validation (lung labels derived from a earlier medium-capacity nodule model) |
 
-- **Split**: `unified_v2.json` — patient-grouped, dataset-stratified.
+- **Split**: `unified.json` — patient-grouped, dataset-stratified.
   1 683 train / 297 val / 325 test series.
 - Slices per split: **365 014 train / 64 097 val / — test held out**.
 - **Preprocessing**: each axial slice resized to 256 × 256.
@@ -68,7 +68,7 @@ returns.
 
 ## 5. Evaluation protocol
 
-**Held-out test split** (45 751 slices from the `unified_v2` test set).
+**Held-out test split** (45 751 slices from the `unified` test set).
 The training loop used the `val` split for early stopping and
 best-Dice checkpoint selection; the numbers below come from the
 completely untouched **`test`** split (never seen during training or

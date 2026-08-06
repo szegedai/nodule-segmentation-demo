@@ -9,7 +9,7 @@ task: roi
 
 data:
   data_root:   ${DATA_ROOT}           # contains ct_2d/ and roi_sem_seg_2d/
-  split_json:  data/splits/unified_v2.json
+  split_json:  data/splits/unified.json
 
 preprocessing:
   target_size:  [256, 256]

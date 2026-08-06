@@ -1,12 +1,12 @@
 # ROI — 2D lung foreground segmentation.
 # Reproduces the bundled checkpoint at checkpoints/roi/best.pth
-# (val Dice = 0.96 on the unified_v2 split).
+# (val Dice = 0.96 on the unified split).
 
 task: roi
 
 data:
   data_root:   ${DATA_ROOT}           # contains ct_2d/ and roi_sem_seg_2d/
-  split_json:  data/splits/unified_v2.json
+  split_json:  data/splits/unified.json
 
 preprocessing:
   target_size:  [256, 256]

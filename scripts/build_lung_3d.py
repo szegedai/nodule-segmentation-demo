@@ -29,8 +29,8 @@ Usage
         --out-dir           $DATA_ROOT/lung_sem_seg_3d \\
         --roi-config        ./ckpts/roi/config.yaml \\
         --roi-checkpoint    ./ckpts/roi/model.pth \\
-        --split-in          data/splits/unified_v2.json \\
-        --split-out-ex-lidc data/splits/unified_v2_ex_lidc.json \\
+        --split-in          data/splits/unified.json \\
+        --split-out-ex-lidc data/splits/unified_ex_lidc.json \\
         --manifest-out      lung_source_manifest.json
 """
 
@@ -131,7 +131,7 @@ def main():
     ap.add_argument("--demo-root",       default=None, help="path to nodule-training-demo (for model.py). "
                     "Defaults to sibling of the main repo.")
     ap.add_argument("--split-in",        default=None,
-                    help="input split JSON (unified_v2.json). If given, an ex-LIDC (GT-only) "
+                    help="input split JSON (unified.json). If given, an ex-LIDC (GT-only) "
                          "variant is emitted alongside --split-out-ex-lidc.")
     ap.add_argument("--split-out-ex-lidc", default=None,
                     help="path for the ex-LIDC split JSON (keeps only series with GT lung "

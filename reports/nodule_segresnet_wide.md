@@ -1,4 +1,4 @@
-# Lung Nodule Segmentation — SegResNet 3D — WIDE, v2 split
+# Lung Nodule Segmentation — SegResNet 3D — WIDE
 
 ## 1. Task
 
@@ -28,17 +28,17 @@ cropped to a per-series lung bounding box.
 
 ## 3. Data
 
-Trained on the **`unified_v2`** split (patient-grouped, dataset-stratified,
+Trained on the **`unified`** split (patient-grouped, dataset-stratified,
 **full corpus**: NLST + NSCLC + LIDC-IDRI).
 
 Split sizes: **1 683 train / 297 val / 325 test (held out)**.
 
-**Note on bboxes.** This model was originally trained with the newer
-`bboxes_unified_v2.json` bboxes (tighter lung crops, regenerated), which
-differ from the `processed/bboxes_unified.json` bundled with this demo.
-For byte-for-byte reproduction of the reported test-set numbers, use the
-v2 bboxes; otherwise expect small variance from the ~62 % of series whose
-bbox coordinates differ.
+**Note on bboxes.** This model was originally trained with a regenerated
+bbox JSON (tighter lung crops) that differs from the
+`processed/bboxes_unified.json` bundled with this demo. Reproducing from
+the bundled bboxes gives small variance from the released checkpoint
+(~62 % of series have differing bbox coordinates) but does not materially
+affect training.
 
 Class imbalance: nodule voxels are on the order of ~10⁻⁵ of the total,
 which shapes how each metric should be read (§7).
@@ -65,7 +65,7 @@ Best checkpoint (evaluated below): **epoch 489 / 1000**.
 ## 5. Evaluation protocol
 
 **Held-out test split** (325 series). The training loop used the
-`val` split of `unified_v2` for early stopping and best-Dice
+`val` split of `unified` for early stopping and best-Dice
 checkpoint selection; the numbers below come from the completely
 untouched **`test`** split (never seen during training or model
 selection). Predictions taken as `argmax` over the 2-channel softmax
@@ -133,11 +133,11 @@ summary.
 ## 8. How to load & run inference
 
 Pre-trained weights are hosted at
-[`Kakimaki00/nodule-segresnet-3d-wide-v2`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide-v2). Download and
+[`Kakimaki00/nodule-segresnet-3d-wide`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide). Download and
 load directly:
 
 ```bash
-huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide-v2 --local-dir ./ckpt
+huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide --local-dir ./ckpt
 ```
 
 ```python
@@ -174,12 +174,12 @@ or use the demo's `inference.py` which chains them for you.
 
 ## 9. Reproducibility
 
-- Config       `configs/segresnet_wide_v2.yaml`
-- Checkpoint   `checkpoints/segresnet_wide_v2/best_model.pth`
-- Metrics JSON `checkpoints/segresnet_wide_v2/eval_metrics_nodule_test.json`
-- Command      `python eval_metrics_nodule.py --config configs/segresnet_wide_v2.yaml --ckpt checkpoints/segresnet_wide_v2/best_model.pth --split test`
+- Config       `configs/segresnet_wide.yaml`
+- Checkpoint   `checkpoints/segresnet_wide/best_model.pth`
+- Metrics JSON `checkpoints/segresnet_wide/eval_metrics_nodule_test.json`
+- Command      `python eval_metrics_nodule.py --config configs/segresnet_wide.yaml --ckpt checkpoints/segresnet_wide/best_model.pth --split test`
 
 Companion two-stage nodule models on HuggingFace:
 
-- [`Kakimaki00/nodule-segresnet-3d-small`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) — small SegResNet on v2
-- [`Kakimaki00/nodule-dynunet-3d`](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) — DynUNet (3D U-Net) on v2
+- [`Kakimaki00/nodule-segresnet-3d-small`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) — small SegResNet
+- [`Kakimaki00/nodule-dynunet-3d`](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) — DynUNet (3D U-Net)
