@@ -1,4 +1,4 @@
-# Lung Nodule Segmentation — SegResNet 3D — wide, v1 (unified) split (legacy)
+# Lung Nodule Segmentation — SegResNet 3D — WIDE, v2 split
 
 ## 1. Task
 
@@ -20,7 +20,7 @@ cropped to a per-series lung bounding box.
 | Spatial dims            | 3 |
 | Input channels          | 1 |
 | Output channels         | 2 (softmax) |
-| Initial feature width   | 32 (wide) |
+| Initial feature width   | **32 (wide — 4× the small variant)** |
 | Encoder blocks per level| `[1, 2, 2, 4, 4]` |
 | Decoder blocks per level| `[1, 1, 1, 1]` |
 | Dropout                 | 0.1 |
@@ -28,18 +28,17 @@ cropped to a per-series lung bounding box.
 
 ## 3. Data
 
-Trained on the **legacy `unified` split** (patient-grouped,
-dataset-stratified, **full corpus**: NLST + NSCLC + LIDC-IDRI).
+Trained on the **`unified_v2`** split (patient-grouped, dataset-stratified,
+**full corpus**: NLST + NSCLC + LIDC-IDRI).
 
-Split sizes: **1 609 train / 345 val / 351 test (held out)**.
+Split sizes: **1 683 train / 297 val / 325 test (held out)**.
 
-**Note on split.** This model uses the *first-generation* `unified` split.
-Every other two-stage nodule and joint model in the demo uses the newer
-`unified_v2` split, and the two splits have different patient
-assignments. **This model's test-set numbers are NOT directly comparable
-to the numbers of any other model in the demo** — cross-split ranking is
-not valid. Kept as an architectural reference point; see
-`segresnet_wide_v2` for the wide-SegResNet result on the current benchmark.
+**Note on bboxes.** This model was originally trained with the newer
+`bboxes_unified_v2.json` bboxes (tighter lung crops, regenerated), which
+differ from the `processed/bboxes_unified.json` bundled with this demo.
+For byte-for-byte reproduction of the reported test-set numbers, use the
+v2 bboxes; otherwise expect small variance from the ~62 % of series whose
+bbox coordinates differ.
 
 Class imbalance: nodule voxels are on the order of ~10⁻⁵ of the total,
 which shapes how each metric should be read (§7).
@@ -61,17 +60,17 @@ which shapes how each metric should be read (§7).
 | Hardware           | 1 × NVIDIA H100 94 GB |
 | Wall-clock         | ≈ 12 days |
 
-Best checkpoint (evaluated below): **epoch 544 / 1000**.
+Best checkpoint (evaluated below): **epoch 489 / 1000**.
 
 ## 5. Evaluation protocol
 
-**Held-out test split** (351 series). The training loop used the
-`val` split of `unified` for early stopping and best-Dice
+**Held-out test split** (325 series). The training loop used the
+`val` split of `unified_v2` for early stopping and best-Dice
 checkpoint selection; the numbers below come from the completely
 untouched **`test`** split (never seen during training or model
 selection). Predictions taken as `argmax` over the 2-channel softmax
 output; foreground = class 1. All metrics are computed at the voxel
-level and micro-averaged over the whole test split (5,888,802,816
+level and micro-averaged over the whole test split (5,452,595,200
 voxels total).
 
 ## 6. Results
@@ -80,32 +79,32 @@ voxels total).
 
 | Metric             | Value |
 |--------------------|------:|
-| **mean IoU**       | **0.7402** |
+| **mean IoU**       | **0.7482** |
 | **Accuracy**       | **0.9996** |
-| **Precision**      | **0.6465** |
-| **Recall**         | **0.6525** |
+| **Precision**      | **0.5766** |
+| **Recall**         | **0.7818** |
 
 ### Supplementary
 
 | Metric                          | Value  |
 |---------------------------------|-------:|
-| IoU (foreground / nodule class) | 0.4809 |
+| IoU (foreground / nodule class) | 0.4967 |
 | IoU (background class)          | 0.9996 |
-| Dice / F1 (micro)               | 0.6495 |
+| Dice / F1 (micro)               | 0.6637 |
 
-### Per-case Dice distribution (351 val cases)
+### Per-case Dice distribution (325 val cases)
 
 | Statistic | Value |
 |-----------|------:|
-| Mean      | 0.5634 |
-| Std       | 0.2576 |
+| Mean      | 0.5706 |
+| Std       | 0.2598 |
 | Min       | 0.0000 |
-| p05       | 0.0033 |
-| p25       | 0.3916 |
-| Median    | 0.6308 |
-| p75       | 0.7833 |
-| p95       | 0.8652 |
-| Max       | 0.9330 |
+| p05       | 0.0000 |
+| p25       | 0.4069 |
+| Median    | 0.6304 |
+| p75       | 0.7834 |
+| p95       | 0.8837 |
+| Max       | 0.9394 |
 
 ## 7. Notes on interpretation
 
@@ -113,20 +112,20 @@ Nodule segmentation is severely class-imbalanced (~10⁻⁵ of voxels are
 nodule), which distorts the standard metric set:
 
 - **Accuracy** is trivially near 1.0 for any reasonable model — the
-  model gets ≈ 99.9556 % of voxels right by predicting
+  model gets ≈ 99.9649 % of voxels right by predicting
   "background" almost everywhere. Uninformative on its own here.
 - **mIoU** averages the foreground and background IoU. `IoU_background`
   is essentially 1.0, so mIoU is roughly `0.5 + 0.5 · IoU_nodule`. The
-  useful signal is in `IoU_nodule` (0.4809) and Dice / F1
-  (0.6495).
+  useful signal is in `IoU_nodule` (0.4967) and Dice / F1
+  (0.6637).
 - **Precision / Recall** are the standard per-voxel figures — no
-  imbalance caveat needed. Recall 0.6525 means the model
-  correctly labels ~65 % of nodule voxels;
-  Precision 0.6465 means ~65 % of
+  imbalance caveat needed. Recall 0.7818 means the model
+  correctly labels ~78 % of nodule voxels;
+  Precision 0.5766 means ~58 % of
   predicted-nodule voxels are true nodule.
 
-Per-case Dice mean (0.5634) is lower than the micro Dice
-(0.6495) because large nodules dominate the micro
+Per-case Dice mean (0.5706) is lower than the micro Dice
+(0.6637) because large nodules dominate the micro
 average; per-case Dice weights each patient equally regardless of
 nodule size. Clinically the per-case distribution is the more useful
 summary.
@@ -134,11 +133,11 @@ summary.
 ## 8. How to load & run inference
 
 Pre-trained weights are hosted at
-[`Kakimaki00/nodule-segresnet-3d-wide-v1`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide-v1). Download and
+[`Kakimaki00/nodule-segresnet-3d-wide-v2`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide-v2). Download and
 load directly:
 
 ```bash
-huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide-v1 --local-dir ./ckpt
+huggingface-cli download Kakimaki00/nodule-segresnet-3d-wide-v2 --local-dir ./ckpt
 ```
 
 ```python
@@ -175,13 +174,13 @@ or use the demo's `inference.py` which chains them for you.
 
 ## 9. Reproducibility
 
-- Config       `configs/segresnet_wide_v1.yaml`
-- Checkpoint   `checkpoints/segresnet_wide_v1/best_model.pth`
-- Metrics JSON `checkpoints/segresnet_wide_v1/eval_metrics_nodule_test.json`
-- Command      `python eval_metrics_nodule.py --config configs/segresnet_wide_v1.yaml --ckpt checkpoints/segresnet_wide_v1/best_model.pth --split test`
+- Config       `configs/segresnet_wide_v2.yaml`
+- Checkpoint   `checkpoints/segresnet_wide_v2/best_model.pth`
+- Metrics JSON `checkpoints/segresnet_wide_v2/eval_metrics_nodule_test.json`
+- Command      `python eval_metrics_nodule.py --config configs/segresnet_wide_v2.yaml --ckpt checkpoints/segresnet_wide_v2/best_model.pth --split test`
 
 Companion two-stage nodule models on HuggingFace:
 
-- [`Kakimaki00/nodule-segresnet-3d-wide-v2`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide-v2) — wide SegResNet on the current v2 benchmark (recommended)
 - [`Kakimaki00/nodule-segresnet-3d-small`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-small) — small SegResNet on v2
 - [`Kakimaki00/nodule-dynunet-3d`](https://huggingface.co/Kakimaki00/nodule-dynunet-3d) — DynUNet (3D U-Net) on v2
+- [`Kakimaki00/nodule-segresnet-3d-wide-v1`](https://huggingface.co/Kakimaki00/nodule-segresnet-3d-wide-v1) — wide SegResNet on legacy v1 split

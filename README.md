@@ -101,9 +101,17 @@ best-checkpoint selection during training.
 | Config                          | Architecture                | Params  | Batch | Split           | Epochs | Test mIoU | Test Recall | Test Precision |
 |---------------------------------|-----------------------------|---------|-------|-----------------|--------|----------:|------------:|---------------:|
 | `segresnet_small_v2.yaml`       | SegResNet (init_filters=16) | 20.7 M  | 4     | `unified_v2`    | 400    |    0.7391 |       0.812 |          0.539 |
-| `segresnet_wide_v2.yaml`        | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified_v2`    | 1000   |     *TBA* |       *TBA* |          *TBA* |
+| `segresnet_wide_v2.yaml` §      | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified_v2`    | 1000   |    0.7482 |       0.782 |          0.577 |
 | `dynunet_v2.yaml`               | DynUNet (6-level)           | 31.2 M  | 2     | `unified_v2`    | 400    | **0.7594**|       0.757 |          0.624 |
 | `segresnet_wide_v1.yaml` ‡‡     | SegResNet (init_filters=32) | 82.7 M  | 2     | `unified` (legacy) | 1000 |    0.7402 |       0.652 |          0.647 |
+
+**§ Per-case Dice.** On voxel-level metrics (mIoU / Dice-micro / the
+table above), `dynunet_v2` is the best model on the v2 test set. On
+*per-case mean Dice* (each patient weighted equally, regardless of
+nodule size), `segresnet_wide_v2` wins at **0.5706** vs dynunet_v2's
+0.5560 and segresnet_small_v2's 0.5240. Which model is "best" depends
+on whether you want to reward large-nodule accuracy (micro) or overall
+patient coverage (per-case).
 
 ### Joint end-to-end (single 3-class model, no bbox stage)
 
