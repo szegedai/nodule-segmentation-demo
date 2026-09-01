@@ -1,0 +1,69 @@
+# Stage 2 Fine — SegResNet WIDE (init_filters=32), SLIDING-WINDOW variant.
+#
+# Same architecture as `segresnet_wide.yaml` (the paper's best two-stage
+# on per-case Dice); differs only in inference recipe (SW at 128³ instead
+# of 256³ resample). See reports/nodule_segresnet_wide_sw.md for
+# test-set comparison.
+
+task: nodule
+
+data:
+  datasets:
+    - name: unified
+      ct_dir:  ${DATA_ROOT}/ct_3d
+      seg_dir: ${DATA_ROOT}/nodule_sem_seg_3d
+  bbox_json:   processed/bboxes_unified.json
+  split_json:  data/splits/unified.json
+  num_workers: 8
+
+preprocessing:
+  patch_size:   [128, 128, 128]
+  bbox_padding: 20
+
+model:
+  name:         segresnet
+  spatial_dims: 3
+  in_channels:  1
+  out_channels: 2
+  init_filters: 32
+  blocks_down:  [1, 2, 2, 4, 4]
+  blocks_up:    [1, 1, 1, 1]
+  dropout_prob: 0.1
+
+training:
+  mode:               sliding_window
+  patches_per_volume: 4
+  pos_neg_ratio:      2
+  epochs:             400
+  batch_size:         1
+  lr:                 1.0e-5
+  weight_decay:       1.0e-5
+  val_interval:       5
+  device:             cuda
+  amp:                true
+  amp_dtype:          bfloat16
+  seed:               42
+
+loss:
+  alpha:      0.3
+  beta:       0.7
+  gamma:      2.0
+  prob_clamp: 1.0e-4
+  lambda_ce:        0.3
+  ce_bg_weight:     1.0
+  ce_nodule_weight: 100.0
+
+scheduler:
+  T_max:   400
+  eta_min: 1.0e-6
+
+inference:
+  sw_overlap: 0.5
+  sw_batch:   2
+
+checkpoints:
+  dir:        checkpoints/segresnet_wide_sw
+  save_every: 50
+
+logging:
+  dir:          runs/segresnet_wide_sw

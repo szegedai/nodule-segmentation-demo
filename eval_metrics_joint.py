@@ -28,7 +28,27 @@ from dataset    import build_eval_dataset
 from model      import build_model, count_parameters
 from transforms import build_transforms
 
+from monai.inferers import sliding_window_inference
+
 CLASS_NAMES = ["background", "lung", "nodule"]
+
+
+def build_predictor(model, cfg):
+    """Return a callable `predictor(x) -> logits` matching cfg's mode."""
+    training = cfg.get("training", {})
+    if training.get("mode", "resize") != "sliding_window":
+        return model
+    preproc  = cfg.get("preprocessing", {})
+    inf_cfg  = cfg.get("inference",     {})
+    roi_size = tuple(preproc.get("patch_size", [128, 128, 128]))
+    ovlp     = float(inf_cfg.get("sw_overlap", 0.5))
+    swbs     = int(inf_cfg.get("sw_batch",   4))
+    def _predict(x):
+        return sliding_window_inference(
+            inputs=x, roi_size=roi_size, sw_batch_size=swbs,
+            predictor=model, overlap=ovlp, mode="gaussian",
+        )
+    return _predict
 
 
 def load_config(path):
@@ -51,8 +71,9 @@ def load_weights(model, path):
 
 
 @torch.no_grad()
-def evaluate(model, loader, device, amp_dtype, num_classes=3):
+def evaluate(model, loader, device, amp_dtype, num_classes=3, predictor=None):
     model.eval()
+    forward = predictor if predictor is not None else model
     tp = [0] * num_classes
     fp = [0] * num_classes
     fn = [0] * num_classes
@@ -70,7 +91,7 @@ def evaluate(model, loader, device, amp_dtype, num_classes=3):
 
         with torch.autocast(device_type="cuda", dtype=amp_dtype,
                             enabled=(amp_dtype is not None and device.type == "cuda")):
-            logits = model(img)
+            logits = forward(img)
 
         pred = logits.float().argmax(dim=1)               # (B, H, W, D)
         gt   = lbl[:, 0].long() if lbl.ndim == 5 else lbl.long()
@@ -170,10 +191,13 @@ def main():
     print(f"loaded ckpt {args.ckpt} (epoch={ep})", flush=True)
 
     amp_dtype = torch.bfloat16 if cfg.get("training", {}).get("amp", True) else None
+    predictor = build_predictor(model, cfg)
+    mode = cfg.get("training", {}).get("mode", "resize")
+    print(f"inference mode: {mode}", flush=True)
 
     print("evaluating…", flush=True)
     m = evaluate(model, val_loader, device, amp_dtype,
-                 num_classes=cfg["model"]["out_channels"])
+                 num_classes=cfg["model"]["out_channels"], predictor=predictor)
 
     m["_meta"] = {
         "config":       args.config,

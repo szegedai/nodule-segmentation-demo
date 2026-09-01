@@ -34,6 +34,8 @@ from pathlib import Path
 
 import torch
 import yaml
+from monai.data import list_data_collate
+from monai.inferers import sliding_window_inference
 from monai.metrics import DiceMetric
 from monai.transforms import AsDiscrete
 from monai.utils import set_determinism
@@ -170,9 +172,34 @@ def make_dice_metric(task):
 # ── validation ───────────────────────────────────────────────────────────────
 
 @torch.no_grad()
-def validate(task, model, loader, criterion, device, cfg=None):
+def make_predictor(task, model, cfg):
+    """Return a callable `predictor(x) -> logits` for validation / inference.
+
+    In `training.mode: resize` this is just the model. In
+    `training.mode: sliding_window` (for 3D nodule and joint tasks) it wraps
+    the model in MONAI's `sliding_window_inference` — same recipe used at
+    final eval time.
+    """
+    training = cfg.get("training", {}) if cfg else {}
+    if training.get("mode", "resize") != "sliding_window" or task == "roi":
+        return model
+    preproc  = cfg.get("preprocessing", {})
+    inf_cfg  = cfg.get("inference",     {})
+    roi_size = tuple(preproc.get("patch_size", [128, 128, 128]))
+    ovlp     = float(inf_cfg.get("sw_overlap", 0.5))
+    swbs     = int(inf_cfg.get("sw_batch",   4))
+    def _predict(x):
+        return sliding_window_inference(
+            inputs=x, roi_size=roi_size, sw_batch_size=swbs,
+            predictor=model, overlap=ovlp, mode="gaussian",
+        )
+    return _predict
+
+
+def validate(task, model, loader, criterion, device, cfg=None, predictor=None):
     """Return dict of val metrics. Task-shape aware."""
     model.eval()
+    forward = predictor if predictor is not None else model
     post = make_postproc(task, cfg=cfg)
     metric = make_dice_metric(task)
 
@@ -184,7 +211,7 @@ def validate(task, model, loader, criterion, device, cfg=None):
         images = batch["image"].to(device)
         labels = post.label_to_device(batch["label"], device)
 
-        logits = model(images)
+        logits = forward(images)
         # Loss expects the same label dtype/shape it was trained with.
         loss = criterion(logits, labels)
         total_loss += loss.item()
@@ -253,18 +280,24 @@ def main():
     # Optional per-epoch subsampling — used for ROI, whose train set is ~475k
     # slices, so a full epoch is impractical.
     samples_per_epoch = cfg["training"].get("samples_per_epoch")
+    # list_data_collate flattens `RandCropBy*Labeld`'s list-of-dicts output
+    # into a single batch dim in sliding_window mode; it's a no-op for plain
+    # dicts (resize mode / ROI).
     if samples_per_epoch:
         train_sampler = RandomSampler(train_ds, replacement=False,
                                       num_samples=int(samples_per_epoch))
         train_loader  = DataLoader(train_ds, batch_size=bs, sampler=train_sampler,
-                                   num_workers=n_workers, pin_memory=pin)
+                                   num_workers=n_workers, pin_memory=pin,
+                                   collate_fn=list_data_collate)
         print(f"  Sampler: RandomSampler(num_samples={samples_per_epoch})")
     else:
         train_loader = DataLoader(train_ds, batch_size=bs, shuffle=True,
-                                  num_workers=n_workers, pin_memory=pin)
+                                  num_workers=n_workers, pin_memory=pin,
+                                  collate_fn=list_data_collate)
 
     val_loader = DataLoader(val_ds, batch_size=1, shuffle=False,
-                            num_workers=n_workers, pin_memory=pin)
+                            num_workers=n_workers, pin_memory=pin,
+                            collate_fn=list_data_collate)
 
     # ── model / loss / optim ────────────────────────────────────────────────
     model = build_model(cfg["model"]).to(device)
@@ -304,6 +337,11 @@ def main():
 
     post = make_postproc(task, cfg=cfg)
     train_metric = make_dice_metric(task)
+
+    # In resize mode this is the model itself; in sliding_window mode it
+    # wraps the model in MONAI's sliding_window_inference — same recipe as
+    # final eval.
+    predictor = make_predictor(task, model, cfg)
 
     # ── training loop ───────────────────────────────────────────────────────
     for epoch in range(start_epoch, max_epochs):
@@ -354,7 +392,8 @@ def main():
         print(f"│  TRAIN  loss={train_loss:.4f}   dice={train_dice:.4f}", flush=True)
 
         if (epoch + 1) % val_interval == 0 or epoch == max_epochs - 1:
-            m = validate(task, model, val_loader, criterion, device, cfg=cfg)
+            m = validate(task, model, val_loader, criterion, device, cfg=cfg,
+                         predictor=predictor)
             writer.add_scalar("Loss/val",       m["loss"], epoch)
             writer.add_scalar("Dice/val",       m["dice"], epoch)
             writer.add_scalar("Val/sensitivity", m["sens"] if m["sens"] == m["sens"] else 0.0, epoch)

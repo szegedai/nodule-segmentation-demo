@@ -164,6 +164,41 @@ being ~2.5× slower per epoch than either. Not retrained; not reported
 in the paper. The *2D* SwinUNETR appears only in the ROI section below
 and performs well.**
 
+### Sliding-window variants (not paper baselines)
+
+Seven `*_sw.yaml` configs — the same three two-stage nodule
+architectures and four joint variants as above, but trained with
+**random 128³ positive-biased patches** at native resolution and
+evaluated with MONAI's `sliding_window_inference` instead of the
+paper's single 256³ resize forward.
+
+The mode is a `training.mode: sliding_window` toggle in the YAML;
+default `resize` reproduces the paper recipe byte-for-byte. See any
+`configs/*_sw.yaml` for the extra keys (`patch_size`,
+`patches_per_volume`, `pos_neg_ratio` / `class_sample_ratios`,
+`inference.sw_overlap`).
+
+**Test-set summary** (all seven vs. their 256³ paper counterpart):
+
+| Model | 256³ nodule Dice (paper) | SW nodule Dice | Δ |
+|---|---:|---:|---:|
+| `segresnet_small_sw` | 0.6478 | 0.5192 | −0.129 |
+| `segresnet_wide_sw`  | 0.6637 | 0.5387 | −0.125 |
+| `dynunet_sw`         | 0.6838 | 0.4767 | −0.207 |
+| `joint_segresnet_ex_lidc_sw` | 0.6856 | 0.4996 | −0.186 |
+| `joint_segresnet_pseudo_sw`  | 0.6647 | 0.5008 | −0.164 |
+| `joint_dynunet_ex_lidc_sw`   | 0.6261 | 0.3517 | −0.274 |
+| `joint_dynunet_pseudo_sw`    | 0.6027 | 0.4021 | −0.201 |
+
+Sliding-window at 128³ preserves small-nodule resolution but each patch
+sees only ~15% of a lung volume, so the model can't use anatomy-
+conditional context to rule out false positives. Every SW model comes
+in below its resize counterpart on nodule Dice, with much higher recall
+and much lower precision (aggressive over-prediction). Lung Dice on the
+joint variants stays at ~0.98 regardless. Full per-model breakdowns in
+[`reports/nodule_*_sw.md`](reports/) and
+[`reports/joint/joint_*_sw.md`](reports/joint/).
+
 ## Data layout
 
 `DATA_ROOT` must point at a directory laid out like this:
