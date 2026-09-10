@@ -217,6 +217,30 @@ $DATA_ROOT/
 All file series use the same series-UID basenames. The train/val split
 JSONs and the per-series lung bboxes are bundled in this repo — see below.
 
+## Data preparation (raw → `DATA_ROOT`)
+
+The dataset itself is not bundled (≈0.9 TB). To rebuild it from the raw
+sources, the pipeline is:
+
+```
+raw DICOM (ct/ + seg/ + manifest.csv)
+  └─ scripts/dicom_to_npz.py        → ct_3d/ + nodule_sem_seg_3d/
+       (HU clip [-1000, 400] → [0,1], 1 mm isotropic, channel-first npz)
+per-slice 2D ROI lung masks (roi_sem_seg_2d/)
+  └─ scripts/precompute_bboxes_unified.py → per-series lung bboxes JSON
+       (union of the 2D masks + 20 vox padding; model-free)
+  └─ scripts/build_lung_3d.py       → lung_sem_seg_3d/ (GT where available,
+       ROI-model pseudo-labels for LIDC; also emits the ex_lidc split)
+series catalog (nodule_catalog.csv)
+  └─ scripts/build_unified_split.py → patient-grouped, dataset-stratified
+       70/15/15 split JSON (seed 42, deterministic)
+```
+
+The outputs of the last two steps are already bundled
+(`data/splits/*.json`, `processed/bboxes_unified.json`), so these scripts
+are only needed to regenerate the dataset from scratch or to extend it
+with a new corpus.
+
 ## Bundled artifacts
 
 - `data/splits/unified.json` — balanced patient-grouped train/val/test
@@ -391,12 +415,41 @@ configs/dynunet.yaml             two-stage nodule: DynUNet (3D U-Net)
 configs/{roi,roi_swin}.yaml         2D ROI configs
 configs/joint_*.yaml                joint (end-to-end) configs (4)
 scripts/build_lung_3d.py            preprocessing for joint training (writes lung_sem_seg_3d/)
+scripts/dicom_to_npz.py             raw DICOM → normalized npz volumes
+scripts/build_unified_split.py      catalog → patient-grouped split JSON
+scripts/precompute_bboxes_unified.py 2D ROI masks → per-series lung bbox JSON
+container/nodule-seg.def            Apptainer recipe (+ pinned requirements_train.txt)
+slurm/{train,eval}.sh               generic SLURM launchers (site-specific headers)
 data/splits/unified.json         balanced split (used by everything except joint ex_lidc)
 data/splits/unified_ex_lidc.json same split with LIDC filtered out (used by joint ex_lidc)
 processed/bboxes_unified.json       bundled per-series lung bboxes
 reports/                            markdown + PDF metric reports (one per model)
 requirements.txt
 ```
+
+## Cluster training (SLURM + Apptainer)
+
+`container/nodule-seg.def` builds the training container (NGC PyTorch
+24.05 base + pinned deps from `container/requirements_train.txt`):
+
+```bash
+cd container && apptainer build --fakeroot nodule-seg.sif nodule-seg.def
+```
+
+`slurm/train.sh` and `slurm/eval.sh` are generic launchers around
+`train.py` / `eval_metrics_*.py`:
+
+```bash
+export DATA_ROOT=/path/to/dataset
+export SIF=/path/to/nodule-seg.sif
+sbatch --job-name=segresnet_small slurm/train.sh configs/segresnet_small.yaml
+SPLIT=test sbatch slurm/eval.sh nodule configs/segresnet_small.yaml checkpoints/segresnet_small/best_model.pth
+```
+
+The `#SBATCH` headers carry SZTE-supercomputer-specific values
+(`--account`, `--partition`, and the explicit per-GPU bundle of
+32 CPUs / 182 GB — it is not applied automatically there); adjust them
+for other sites.
 
 ## Compute expectations
 

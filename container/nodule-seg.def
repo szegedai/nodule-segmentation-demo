@@ -1,0 +1,11 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:24.05-py3
+
+%files
+./requirements_train.txt /requirements_train.txt
+
+%post
+pip install -r /requirements_train.txt
+
+%runscript
+exec /bin/bash
