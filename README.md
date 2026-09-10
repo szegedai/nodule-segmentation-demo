@@ -199,6 +199,31 @@ joint variants stays at ~0.98 regardless. Full per-model breakdowns in
 [`reports/nodule_*_sw.md`](reports/) and
 [`reports/joint/joint_*_sw.md`](reports/joint/).
 
+#### Reduced-CE-weight retrain (`*_sw_ce10.yaml`)
+
+To test whether the SW precision collapse was driven by the loss
+weighting (nodule CE weight 100, tuned for the resize regime, applied
+to positive-biased sparse patches), all seven SW models were retrained
+identically but with the nodule CE weight lowered 100 → 10. Test-set
+nodule Dice (micro), same split as above:
+
+| Model | SW ce=100 | SW ce=10 | Δ | Precision ce=100 → ce=10 |
+|---|---:|---:|---:|---|
+| `segresnet_small_sw_ce10` | 0.5192 | 0.5370 | +0.018 | 0.377 → 0.465 |
+| `segresnet_wide_sw_ce10`  | 0.5387 | 0.6064 | +0.068 | 0.414 → 0.493 |
+| `dynunet_sw_ce10`         | 0.4767 | 0.4966 | +0.020 | 0.338 → 0.363 |
+| `joint_segresnet_ex_lidc_sw_ce10` | 0.4996 | 0.4978 | −0.002 | 0.347 → 0.349 |
+| `joint_segresnet_pseudo_sw_ce10`  | 0.5008 | 0.5024 | +0.002 | 0.352 → 0.355 |
+| `joint_dynunet_ex_lidc_sw_ce10`   | 0.3517 | 0.4309 | +0.079 | 0.219 → 0.290 |
+| `joint_dynunet_pseudo_sw_ce10`    | 0.4021 | 0.4403 | +0.038 | 0.263 → 0.300 |
+
+The lower weight helps consistently (best SW model is now
+`segresnet_wide_sw_ce10` at 0.606) but closes only part of the gap to
+the 256³ resize baselines — the loss weighting explains some, not all,
+of the SW deficit. Per-model reports in
+[`reports/*_sw_ce10.md`](reports/) and
+[`reports/joint/*_sw_ce10.md`](reports/joint/).
+
 ## Data layout
 
 `DATA_ROOT` must point at a directory laid out like this:

@@ -1,0 +1,66 @@
+# Stage 3 Joint — SegResNet (small), SLIDING-WINDOW, NLST + NSCLC only.
+#
+# Same architecture and data as `joint_segresnet_ex_lidc.yaml`; differs
+# only in inference recipe (SW at 128³ instead of 256³ resample). See
+# reports/joint/joint_segresnet_ex_lidc_sw.md for test-set comparison.
+
+task: joint
+
+data:
+  datasets:
+    - name: unified
+      ct_dir:     ${DATA_ROOT}/ct_3d
+      lung_dir:   ${DATA_ROOT}/lung_sem_seg_3d
+      nodule_dir: ${DATA_ROOT}/nodule_sem_seg_3d
+  split_json:  data/splits/unified_ex_lidc.json
+  num_workers: 8
+
+preprocessing:
+  patch_size:   [128, 128, 128]
+
+model:
+  name:         segresnet
+  spatial_dims: 3
+  in_channels:  1
+  out_channels: 3
+  init_filters: 16
+  blocks_down:  [1, 2, 2, 4, 4]
+  blocks_up:    [1, 1, 1, 1]
+  dropout_prob: 0.1
+
+training:
+  mode:                sliding_window
+  patches_per_volume:  4
+  class_sample_ratios: [0.2, 0.3, 0.5]   # bg / lung / nodule
+  epochs:              400
+  batch_size:          2
+  lr:                  1.0e-5
+  weight_decay:        1.0e-5
+  val_interval:        5
+  device:              cuda
+  amp:                 true
+  amp_dtype:           bfloat16
+  seed:                42
+
+loss:
+  alpha:      0.3
+  beta:       0.7
+  gamma:      2.0
+  prob_clamp: 1.0e-4
+  lambda_ce:  0.1
+  class_weights: [1.0, 1.0, 10.0]
+
+scheduler:
+  T_max:   400
+  eta_min: 1.0e-6
+
+inference:
+  sw_overlap: 0.5
+  sw_batch:   4
+
+checkpoints:
+  dir:        checkpoints/joint_segresnet_ex_lidc_sw_ce10
+  save_every: 50
+
+logging:
+  dir:        runs/joint_segresnet_ex_lidc_sw_ce10
