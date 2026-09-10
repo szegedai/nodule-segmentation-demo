@@ -226,6 +226,10 @@ sources, the pipeline is:
 raw DICOM (ct/ + seg/ + manifest.csv)
   └─ scripts/dicom_to_npz.py        → ct_3d/ + nodule_sem_seg_3d/
        (HU clip [-1000, 400] → [0,1], 1 mm isotropic, channel-first npz)
+3D volumes + lung masks / ROI checkpoint
+  └─ scripts/make_roi_2d.py           → ct_2d/ + roi_sem_seg_2d/
+       (axial slicing; masks from GT lung volumes with --lung_dir, or
+        predicted per slice with --roi_config/--roi_ckpt for LIDC)
 per-slice 2D ROI lung masks (roi_sem_seg_2d/)
   └─ scripts/precompute_bboxes_unified.py → per-series lung bboxes JSON
        (union of the 2D masks + 20 vox padding; model-free)
@@ -418,6 +422,7 @@ scripts/build_lung_3d.py            preprocessing for joint training (writes lun
 scripts/dicom_to_npz.py             raw DICOM → normalized npz volumes
 scripts/build_unified_split.py      catalog → patient-grouped split JSON
 scripts/precompute_bboxes_unified.py 2D ROI masks → per-series lung bbox JSON
+scripts/make_roi_2d.py              3D volumes → 2D ROI training slices (GT or predicted)
 container/nodule-seg.def            Apptainer recipe (+ pinned requirements_train.txt)
 slurm/{train,eval}.sh               generic SLURM launchers (site-specific headers)
 data/splits/unified.json         balanced split (used by everything except joint ex_lidc)
