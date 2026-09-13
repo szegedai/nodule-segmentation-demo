@@ -120,6 +120,30 @@ is trivially ~1, mIoU is dominated by IoU_bg, and Dice / F1 (micro) is
 the honest voxel-level summary. Per-case mean weights each patient
 equally regardless of nodule volume.
 
+## Instance-level metrics (per-nodule)
+
+Connected-component analysis with 26-connectivity, pooled over the
+held-out test split, on the native voxel grid.
+
+- **Instance recall** — GT nodules touched by at least one predicted
+  voxel, over all GT nodules.
+- **Instance precision** — predicted components touching at least one
+  GT voxel, over all predicted components.
+
+| Metric | Value |
+|---|---:|
+| GT nodules (components) | 947 |
+| GT nodules hit          | 820 |
+| **Instance recall**     | **0.8659** |
+| Predicted components    | 7,686 |
+| Predicted components hitting GT | 839 |
+| **Instance precision**  | **0.1092** |
+
+No minimum-size filtering is applied — every predicted component
+counts, so single-voxel false positives lower instance precision.
+Produced by `scripts/instance_metrics.py --config configs/dynunet_sw_ce10.yaml
+--ckpt <ckpt> --split test` (JSON: `results_instance/dynunet_sw_ce10.json`).
+
 ## 8. Reproducibility
 
 - Config       `/home/werner/nodule-segmentation/configs/dynunet_sw_ce10.yaml`

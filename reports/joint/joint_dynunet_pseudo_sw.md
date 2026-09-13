@@ -111,6 +111,30 @@ neutral-to-negative on nodule Dice compared to the 256³ resize
 baseline — patches see only ~15% of a typical lung volume, which
 limits anatomy-conditional reasoning.
 
+## Instance-level metrics (per-nodule)
+
+Connected-component analysis with 26-connectivity, pooled over the
+held-out test split, on the native voxel grid.
+
+- **Instance recall** — GT nodules touched by at least one predicted
+  voxel, over all GT nodules.
+- **Instance precision** — predicted components touching at least one
+  GT voxel, over all predicted components.
+
+| Metric | Value |
+|---|---:|
+| GT nodules (components) | 4,215 |
+| GT nodules hit          | 519 |
+| **Instance recall**     | **0.1231** |
+| Predicted components    | 34,097 |
+| Predicted components hitting GT | 8,615 |
+| **Instance precision**  | **0.2527** |
+
+No minimum-size filtering is applied — every predicted component
+counts, so single-voxel false positives lower instance precision.
+Produced by `scripts/instance_metrics.py --config configs/joint_dynunet_pseudo_sw.yaml
+--ckpt <ckpt> --split test` (JSON: `results_instance/joint_dynunet_pseudo_sw.json`).
+
 ## 8. Reproducibility
 
 - Config       `/home/werner/nodule-training-demo/configs/joint_dynunet_pseudo_sw.yaml`

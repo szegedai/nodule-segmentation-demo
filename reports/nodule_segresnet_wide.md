@@ -172,6 +172,30 @@ is needed to produce that bbox — see the accompanying ROI checkpoints
 or [`Kakimaki00/roi-swinunetr-2d`](https://huggingface.co/Kakimaki00/roi-swinunetr-2d)),
 or use the demo's `inference.py` which chains them for you.
 
+## Instance-level metrics (per-nodule)
+
+Connected-component analysis with 26-connectivity, pooled over the
+held-out test split, on the 256-cube resample grid (same grid as the voxel metrics above).
+
+- **Instance recall** — GT nodules touched by at least one predicted
+  voxel, over all GT nodules.
+- **Instance precision** — predicted components touching at least one
+  GT voxel, over all predicted components.
+
+| Metric | Value |
+|---|---:|
+| GT nodules (components) | 941 |
+| GT nodules hit          | 700 |
+| **Instance recall**     | **0.7439** |
+| Predicted components    | 1,653 |
+| Predicted components hitting GT | 703 |
+| **Instance precision**  | **0.4253** |
+
+No minimum-size filtering is applied — every predicted component
+counts, so single-voxel false positives lower instance precision.
+Produced by `scripts/instance_metrics.py --config configs/segresnet_wide.yaml
+--ckpt <ckpt> --split test` (JSON: `results_instance/segresnet_wide.json`).
+
 ## 9. Reproducibility
 
 - Config       `configs/segresnet_wide.yaml`

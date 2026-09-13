@@ -166,6 +166,30 @@ with torch.no_grad():
 Unlike the two-stage `nodule-*` HF checkpoints, this model does **not**
 need a lung-bbox crop — feed it the whole CT resampled to 256³.
 
+## Instance-level metrics (per-nodule)
+
+Connected-component analysis with 26-connectivity, pooled over the
+held-out test split, on the 256-cube resample grid (same grid as the voxel metrics above).
+
+- **Instance recall** — GT nodules touched by at least one predicted
+  voxel, over all GT nodules.
+- **Instance precision** — predicted components touching at least one
+  GT voxel, over all predicted components.
+
+| Metric | Value |
+|---|---:|
+| GT nodules (components) | 258 |
+| GT nodules hit          | 160 |
+| **Instance recall**     | **0.6202** |
+| Predicted components    | 518 |
+| Predicted components hitting GT | 482 |
+| **Instance precision**  | **0.9305** |
+
+No minimum-size filtering is applied — every predicted component
+counts, so single-voxel false positives lower instance precision.
+Produced by `scripts/instance_metrics.py --config configs/joint_segresnet_ex_lidc.yaml
+--ckpt <ckpt> --split test` (JSON: `results_instance/joint_segresnet_ex_lidc.json`).
+
 ## 9. Reproducibility
 
 - Config       `configs/joint_segresnet_ex_lidc.yaml`
