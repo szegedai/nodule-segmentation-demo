@@ -1,4 +1,4 @@
-# Joint 3-class Lung Segmentation — SegResNet, ex-LIDC (NLST + NSCLC only) — sliding-window (128³)
+# Joint 3-class Lung Segmentation — SegResNet, ex-LIDC (NLST + NSCLC only) — sliding-window (128³), CE weight 100
 
 ## 1. Task
 

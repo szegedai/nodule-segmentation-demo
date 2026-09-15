@@ -1,4 +1,4 @@
-# Joint 3-class Lung Segmentation — SegResNet, pseudo-LIDC (full corpus w/ pseudo lung labels) — sliding-window (128³), reduced CE weight
+# Joint 3-class Lung Segmentation — SegResNet, pseudo-LIDC (full corpus w/ pseudo lung labels) — sliding-window (128³), CE weight 10
 
 ## 1. Task
 

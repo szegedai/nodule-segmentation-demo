@@ -83,14 +83,14 @@ def nodule_report(cfg_path, m_path):
     loss_cfg = cfg.get("loss", {})
     nod_w = int(float(loss_cfg.get("ce_nodule_weight", 100)))
     is_ce10 = Path(cfg_path).stem.endswith("_ce10")
-    title_suffix = ", reduced CE weight" if is_ce10 else ""
+    title_suffix = ""
     base_stem = Path(cfg_path).stem.replace("_ce10", "").replace("_sw", "_v2")
     diff_txt = ("the differences are a reduced nodule CE weight (10 instead of 100) and the inference recipe:"
                 if is_ce10 else "the only difference is inference recipe:")
     stem = Path(cfg_path).stem
     hf_sec = "" if is_sw else hf_section(stem)
     if is_sw:
-        title_recipe = " — sliding-window (128³)"
+        title_recipe = f" — sliding-window (128³), CE weight {nod_w}"
         task_intro = ("lung-bbox-cropped. Same task as the paper's `" + base_stem +
             "`\nmodel — " + diff_txt + " **sliding-window over 128³\n"
             "patches at native resolution** rather than a single forward on a 256³\nresample.")
@@ -269,14 +269,14 @@ def joint_report(cfg_path, m_path):
     loss_cfg = cfg.get("loss", {})
     nod_w = int(float((loss_cfg.get("class_weights") or [1, 1, 100])[-1]))
     is_ce10 = Path(cfg_path).stem.endswith("_ce10")
-    title_suffix = ", reduced CE weight" if is_ce10 else ""
+    title_suffix = ""
     diff_txt = ("the differences are a reduced nodule CE\nweight (10 instead of 100) and the inference recipe:"
                 if is_ce10 else "the only difference is\ninference recipe:")
     stem = Path(cfg_path).stem
     hf_sec = "" if is_sw else hf_section(stem)
     base_stem = stem.replace('_ce10','').replace('_sw','')
     if is_sw:
-        title_recipe = " — sliding-window (128³)"
+        title_recipe = f" — sliding-window (128³), CE weight {nod_w}"
         task_intro = ("Same task as the paper's\n`" + base_stem + "` — " + diff_txt +
             " **sliding-window over 128³ patches at native\n"
             "resolution** rather than a single forward on a 256³ resample.")

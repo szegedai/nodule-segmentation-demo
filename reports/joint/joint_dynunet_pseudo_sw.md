@@ -1,4 +1,4 @@
-# Joint 3-class Lung Segmentation — DynUNet / 3D U-Net, pseudo-LIDC (full corpus w/ pseudo lung labels) — sliding-window (128³)
+# Joint 3-class Lung Segmentation — DynUNet / 3D U-Net, pseudo-LIDC (full corpus w/ pseudo lung labels) — sliding-window (128³), CE weight 100
 
 ## 1. Task
 

@@ -170,7 +170,9 @@ Seven `*_sw.yaml` configs — the same three two-stage nodule
 architectures and four joint variants as above, but trained with
 **random 128³ positive-biased patches** at native resolution and
 evaluated with MONAI's `sliding_window_inference` instead of the
-paper's single 256³ resize forward.
+paper's single 256³ resize forward. These runs keep the baseline
+nodule CE weight of 100 (the `*_sw_ce10.yaml` variants below lower it
+to 10).
 
 The mode is a `training.mode: sliding_window` toggle in the YAML;
 default `resize` reproduces the paper recipe byte-for-byte. See any
@@ -180,7 +182,7 @@ default `resize` reproduces the paper recipe byte-for-byte. See any
 
 **Test-set summary** (all seven vs. their 256³ paper counterpart):
 
-| Model | 256³ nodule Dice (paper) | SW nodule Dice | Δ |
+| Model | 256³ nodule Dice (paper) | SW (ce=100) nodule Dice | Δ |
 |---|---:|---:|---:|
 | `segresnet_small_sw` | 0.6478 | 0.5192 | −0.129 |
 | `segresnet_wide_sw`  | 0.6637 | 0.5387 | −0.125 |

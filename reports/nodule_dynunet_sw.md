@@ -1,4 +1,4 @@
-# Lung Nodule Segmentation — DynUNet / 3D U-Net — sliding-window (128³)
+# Lung Nodule Segmentation — DynUNet / 3D U-Net — sliding-window (128³), CE weight 100
 
 ## 1. Task
 

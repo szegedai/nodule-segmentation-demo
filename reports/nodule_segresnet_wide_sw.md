@@ -1,4 +1,4 @@
-# Lung Nodule Segmentation — SegResNet (wide) — sliding-window (128³)
+# Lung Nodule Segmentation — SegResNet (wide) — sliding-window (128³), CE weight 100
 
 ## 1. Task
 
