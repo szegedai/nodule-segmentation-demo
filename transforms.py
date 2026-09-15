@@ -153,6 +153,18 @@ def get_roi_val_transforms(preproc_cfg=None, training_cfg=None):
 
 
 def get_roi_train_transforms(preproc_cfg=None, training_cfg=None):
+    tcfg = training_cfg or {}
+    if _mode(training_cfg) == "sliding_window":
+        patch = tuple((preproc_cfg or {}).get("patch_size", [256, 256]))
+        return Compose([
+            _rand_pos_neg_crop(
+                patch_size  = patch,
+                num_samples = int(tcfg.get("patches_per_volume", 4)),
+                pos         = float(tcfg.get("pos_neg_ratio", 1.0)),
+                neg         = 1.0,
+            ),
+            EnsureTyped(keys=KEYS, dtype="float32", track_meta=False),
+        ])
     return Compose([
         EnsureTyped(keys=KEYS, dtype="float32", track_meta=False),
     ])

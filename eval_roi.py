@@ -29,6 +29,7 @@ from torch.utils.data import DataLoader
 
 from dataset    import build_datasets, build_eval_dataset
 from model      import build_model
+from eval_metrics_nodule import build_predictor
 from transforms import build_transforms
 
 
@@ -48,8 +49,9 @@ def load_ckpt_tolerant(path, model, device):
 
 
 @torch.no_grad()
-def evaluate(model, loader, device, amp_dtype, threshold=0.5):
+def evaluate(model, loader, device, amp_dtype, threshold=0.5, predictor=None):
     model.eval()
+    forward = predictor if predictor is not None else model
     tp = fp = fn = tn = 0
     per_case_dice = []
     per_case_uid  = []
@@ -59,7 +61,7 @@ def evaluate(model, loader, device, amp_dtype, threshold=0.5):
         img = batch["image"].to(device, non_blocking=True)
         lbl = batch["label"].to(device, non_blocking=True)
         with torch.autocast(device_type="cuda", dtype=amp_dtype, enabled=(amp_dtype is not None)):
-            logits = model(img)
+            logits = forward(img)
         prob = torch.sigmoid(logits.float())
         pred = (prob > threshold).to(torch.uint8)
         gt   = (lbl > 0.5).to(torch.uint8)
@@ -159,7 +161,8 @@ def main():
     amp_dtype = torch.bfloat16 if cfg.get("training", {}).get("amp", True) else None
 
     print(f"evaluating…", flush=True)
-    metrics = evaluate(model, val_loader, device, amp_dtype)
+    metrics = evaluate(model, val_loader, device, amp_dtype,
+                       predictor=build_predictor(model, cfg))
 
     metrics["_meta"] = {
         "config":       args.config,

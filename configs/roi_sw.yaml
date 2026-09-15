@@ -1,0 +1,54 @@
+# ROI — 2D lung foreground segmentation, sliding-window recipe:
+# native-resolution 256x256 patch training + 2D sliding-window inference.
+
+
+
+task: roi
+
+data:
+  data_root:   ${DATA_ROOT}           # contains ct_2d/ and roi_sem_seg_2d/
+  split_json:  data/splits/unified.json
+
+preprocessing:
+  target_size:  [256, 256]           # unused in SW mode (native resolution)
+  patch_size:   [256, 256]
+
+model:
+  name:         segresnet
+  spatial_dims: 2
+  in_channels:  1
+  out_channels: 1                     # sigmoid
+  init_filters: 16
+  blocks_down:  [1, 2, 2, 4, 4]
+  blocks_up:    [1, 1, 1, 1]
+  dropout_prob: 0.1
+
+training:
+  mode:              sliding_window
+  patches_per_volume: 4
+  pos_neg_ratio:     1.0
+  epochs:            100
+  batch_size:        4                # x4 patches = 16 patches/step
+  samples_per_epoch: 20000            # subsample ~1/24 of ~475k slices
+  lr:                1.0e-3
+  weight_decay:      1.0e-5
+  val_interval:      1
+  device:            cuda
+  amp:               true
+  amp_dtype:         bfloat16
+  seed:              42
+
+scheduler:
+  T_max:   100
+  eta_min: 1.0e-6
+
+checkpoints:
+  dir:        checkpoints/roi_sw
+  save_every: 10
+
+logging:
+  dir:        runs/roi_sw
+
+inference:
+  sw_overlap: 0.5
+  sw_batch:   8

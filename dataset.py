@@ -94,7 +94,7 @@ class Roi2DDataset(Dataset):
         root = Path(root)
         self.ct_dir  = root / "ct_2d"
         self.roi_dir = root / "roi_sem_seg_2d"
-        self.target  = tuple(target_size)
+        self.target  = tuple(target_size) if target_size is not None else None
         self.transform = transform
         wanted = set(series_uids)
         # Filename: '<series_uid>_<NNNN>.npz'. Split on the last '_'.
@@ -110,8 +110,9 @@ class Roi2DDataset(Dataset):
         fname = self.files[idx]
         ct  = np.load(self.ct_dir  / fname)["data"].astype(np.float32)  # (1, H, W)
         roi = np.load(self.roi_dir / fname)["data"].astype(np.float32)  # (1, H, W)
-        ct  = _resize2d(ct,  self.target, mode="bilinear")
-        roi = _resize2d(roi, self.target, mode="nearest")
+        if self.target is not None:            # None → native resolution (SW mode)
+            ct  = _resize2d(ct,  self.target, mode="bilinear")
+            roi = _resize2d(roi, self.target, mode="nearest")
         sample = {
             "image":    ct,
             "label":    roi,
@@ -231,7 +232,8 @@ def build_eval_dataset(task, cfg, val_transform, split_name="val"):
             raise ValueError(f"split JSON has no {split_name!r} entry; keys={list(split)}")
         uids   = series_uids_from_split(split[split_name])
         root   = cfg["data"]["data_root"]
-        target = cfg["preprocessing"]["target_size"]
+        sw     = (cfg.get("training") or {}).get("mode", "resize") == "sliding_window"
+        target = None if sw else cfg["preprocessing"]["target_size"]
         return Roi2DDataset(root, uids, target_size=target, transform=val_transform)
     if task == "joint":
         split = load_split(cfg["data"]["split_json"])
@@ -260,7 +262,8 @@ def build_datasets(task, cfg, train_transform, val_transform):
         train_uids = series_uids_from_split(split["train"])
         val_uids   = series_uids_from_split(split["val"])
         root       = cfg["data"]["data_root"]
-        target     = cfg["preprocessing"]["target_size"]
+        sw         = (cfg.get("training") or {}).get("mode", "resize") == "sliding_window"
+        target     = None if sw else cfg["preprocessing"]["target_size"]
         train_ds = Roi2DDataset(root, train_uids, target_size=target, transform=train_transform)
         val_ds   = Roi2DDataset(root, val_uids,   target_size=target, transform=val_transform)
         return train_ds, val_ds

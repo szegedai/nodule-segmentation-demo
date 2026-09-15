@@ -181,7 +181,7 @@ def make_predictor(task, model, cfg):
     final eval time.
     """
     training = cfg.get("training", {}) if cfg else {}
-    if training.get("mode", "resize") != "sliding_window" or task == "roi":
+    if training.get("mode", "resize") != "sliding_window":
         return model
     preproc  = cfg.get("preprocessing", {})
     inf_cfg  = cfg.get("inference",     {})
