@@ -54,7 +54,7 @@ def instance_stats(pred, gt):
 
 
 @torch.no_grad()
-def run(model, loader, device, amp_dtype, nodule_class, predictor=None):
+def run(model, loader, device, amp_dtype, nodule_class, task, predictor=None):
     forward = predictor if predictor is not None else model
     tot = {"n_gt": 0, "n_gt_hit": 0, "n_pred": 0, "n_pred_hit": 0}
     per_case = []
@@ -66,10 +66,12 @@ def run(model, loader, device, amp_dtype, nodule_class, predictor=None):
                             enabled=(amp_dtype is not None and device.type == "cuda")):
             logits = forward(img)
         pred = logits.float().argmax(dim=1).eq(nodule_class)[0].cpu().numpy().astype(np.uint8)
-        if lbl.ndim == 5:                      # (B,1,H,W,D) float mask (nodule task)
-            gt = (lbl[0, 0] > 0.5).cpu().numpy().astype(np.uint8)
-        else:                                  # (B,H,W,D) int label map (joint task)
-            gt = lbl[0].eq(nodule_class).cpu().numpy().astype(np.uint8)
+        # Both tasks yield (B, 1, H, W, D) labels: binary float mask for the
+        # nodule task, {0,1,2} int map for joint — select the nodule class
+        # by task, never by shape.
+        lab = lbl[0, 0] if lbl.ndim == 5 else lbl[0]
+        gt = (lab.eq(nodule_class) if task == "joint"
+              else (lab > 0.5)).cpu().numpy().astype(np.uint8)
 
         n_gt, gt_hit, n_pr, pr_hit = instance_stats(pred, gt)
         tot["n_gt"] += n_gt; tot["n_gt_hit"] += gt_hit
@@ -117,7 +119,7 @@ def main():
           f"ckpt={args.ckpt} (epoch={ep})", flush=True)
 
     amp_dtype = torch.bfloat16 if cfg.get("training", {}).get("amp", True) else None
-    m = run(model, loader, device, amp_dtype, nodule_class,
+    m = run(model, loader, device, amp_dtype, nodule_class, task,
             predictor=build_predictor(model, cfg))
     m["_meta"] = {"config": args.config, "checkpoint": args.ckpt,
                   "eval_split": args.split, "epoch": ep, "task": task,

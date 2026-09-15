@@ -1,914 +1,914 @@
 {
-  "n_gt": 311,
-  "n_gt_hit": 216,
+  "n_gt": 330,
+  "n_gt_hit": 295,
   "n_pred": 5304,
-  "n_pred_hit": 3482,
-  "instance_recall": 0.6945337620578779,
-  "instance_precision": 0.6564856711915535,
+  "n_pred_hit": 300,
+  "instance_recall": 0.8939393939393939,
+  "instance_precision": 0.05656108597285068,
   "connectivity": 26,
   "per_case": [
     {
       "filename": "unified/1.2.840.113654.2.55.105192150029362983958967822439550300465.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 9,
+      "n_gt_hit": 5,
       "n_pred": 30,
-      "n_pred_hit": 29
+      "n_pred_hit": 5
     },
     {
       "filename": "unified/1.2.840.113654.2.55.120195540527040042299100218911033592217.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 20,
-      "n_pred_hit": 19
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.2.840.113654.2.55.131554014629074879725055125050225541536.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 13,
+      "n_gt_hit": 13,
       "n_pred": 34,
-      "n_pred_hit": 31
+      "n_pred_hit": 13
     },
     {
       "filename": "unified/1.2.840.113654.2.55.135181131163185269255707444200564483695.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 5,
+      "n_gt_hit": 4,
       "n_pred": 45,
-      "n_pred_hit": 38
+      "n_pred_hit": 5
     },
     {
       "filename": "unified/1.2.840.113654.2.55.136176068505317397790213817672175011993.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 7,
+      "n_gt_hit": 7,
       "n_pred": 26,
-      "n_pred_hit": 25
+      "n_pred_hit": 7
     },
     {
       "filename": "unified/1.2.840.113654.2.55.151736094660966670123489964024716942063.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 4,
+      "n_gt_hit": 4,
       "n_pred": 28,
-      "n_pred_hit": 24
+      "n_pred_hit": 4
     },
     {
       "filename": "unified/1.2.840.113654.2.55.158466220092524136496371772149930312991.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 12,
+      "n_gt_hit": 9,
       "n_pred": 40,
-      "n_pred_hit": 37
+      "n_pred_hit": 9
     },
     {
       "filename": "unified/1.2.840.113654.2.55.175141405312830297022101030636287677783.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 12,
+      "n_gt_hit": 11,
       "n_pred": 30,
-      "n_pred_hit": 30
+      "n_pred_hit": 11
     },
     {
       "filename": "unified/1.2.840.113654.2.55.175674334851122081937703890069307803316.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 12,
+      "n_gt_hit": 11,
       "n_pred": 34,
-      "n_pred_hit": 30
+      "n_pred_hit": 11
     },
     {
       "filename": "unified/1.2.840.113654.2.55.191062781434798293607816192706079496118.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 6,
+      "n_gt_hit": 6,
       "n_pred": 20,
-      "n_pred_hit": 18
+      "n_pred_hit": 6
     },
     {
       "filename": "unified/1.2.840.113654.2.55.194793742369360160186414224732192217828.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 7,
+      "n_gt_hit": 7,
       "n_pred": 51,
-      "n_pred_hit": 48
+      "n_pred_hit": 7
     },
     {
       "filename": "unified/1.2.840.113654.2.55.209641296962741339877154156642589731585.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 3,
+      "n_gt_hit": 3,
       "n_pred": 27,
-      "n_pred_hit": 25
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.2.840.113654.2.55.21551877046152006703015050217328113764.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 5,
+      "n_gt_hit": 3,
       "n_pred": 22,
-      "n_pred_hit": 21
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.2.840.113654.2.55.238944838267171045713423118512022976877.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 14,
+      "n_gt_hit": 10,
       "n_pred": 52,
-      "n_pred_hit": 52
+      "n_pred_hit": 8
     },
     {
       "filename": "unified/1.2.840.113654.2.55.252790578163294500394363956440600203102.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 2,
+      "n_gt_hit": 2,
       "n_pred": 18,
-      "n_pred_hit": 15
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.2.840.113654.2.55.278537402659263177052326157620432088005.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 6,
+      "n_gt_hit": 5,
       "n_pred": 23,
-      "n_pred_hit": 20
+      "n_pred_hit": 5
     },
     {
       "filename": "unified/1.2.840.113654.2.55.279510004392500981964264782891024988394.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 12,
+      "n_gt_hit": 8,
       "n_pred": 29,
-      "n_pred_hit": 28
+      "n_pred_hit": 8
     },
     {
       "filename": "unified/1.2.840.113654.2.55.302794384775920527444806421208823276939.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 8,
+      "n_gt_hit": 7,
       "n_pred": 34,
-      "n_pred_hit": 30
+      "n_pred_hit": 7
     },
     {
       "filename": "unified/1.2.840.113654.2.55.309284051714675466410688922150944940568.npz",
-      "n_gt": 2,
+      "n_gt": 3,
       "n_gt_hit": 2,
       "n_pred": 33,
-      "n_pred_hit": 30
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.2.840.113654.2.55.310568883499194177674612228558467075574.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 5,
+      "n_gt_hit": 4,
       "n_pred": 23,
-      "n_pred_hit": 22
+      "n_pred_hit": 4
     },
     {
       "filename": "unified/1.2.840.113654.2.55.323559518843693231672333474532877234443.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 5,
+      "n_gt_hit": 4,
       "n_pred": 25,
-      "n_pred_hit": 24
+      "n_pred_hit": 4
     },
     {
       "filename": "unified/1.2.840.113654.2.55.324222466647716155625000469242011339484.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 20,
-      "n_pred_hit": 19
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.2.840.113654.2.55.329658714161562698821424962446782168331.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 3,
+      "n_gt_hit": 3,
       "n_pred": 18,
-      "n_pred_hit": 16
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.2.840.113654.2.55.47028778504353463905881338301946379763.npz",
-      "n_gt": 1,
+      "n_gt": 2,
       "n_gt_hit": 1,
       "n_pred": 45,
-      "n_pred_hit": 38
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.2.840.113654.2.55.71828311603971355574848314789115698260.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 10,
+      "n_gt_hit": 10,
       "n_pred": 32,
-      "n_pred_hit": 32
+      "n_pred_hit": 10
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.133609493625842906316299645537.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 7,
+      "n_gt_hit": 5,
       "n_pred": 49,
-      "n_pred_hit": 46
+      "n_pred_hit": 5
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.145323524722173416458871264223.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 3,
+      "n_gt_hit": 3,
       "n_pred": 46,
-      "n_pred_hit": 42
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.161264160024979199783419898154.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 3,
+      "n_gt_hit": 3,
       "n_pred": 48,
-      "n_pred_hit": 46
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.206783594678245181017881703082.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 5,
+      "n_gt_hit": 5,
       "n_pred": 30,
-      "n_pred_hit": 27
+      "n_pred_hit": 5
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.233761780579373581679264645678.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 5,
+      "n_gt_hit": 5,
       "n_pred": 38,
-      "n_pred_hit": 37
+      "n_pred_hit": 4
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.238404721813420051327689398376.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 3,
+      "n_gt_hit": 3,
       "n_pred": 29,
-      "n_pred_hit": 28
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.238698545397528715963894678334.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 8,
+      "n_gt_hit": 8,
       "n_pred": 45,
-      "n_pred_hit": 43
+      "n_pred_hit": 7
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.239991380969750962371110788210.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 6,
+      "n_gt_hit": 6,
       "n_pred": 31,
-      "n_pred_hit": 28
+      "n_pred_hit": 7
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.244639088722574373221242820202.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 6,
+      "n_gt_hit": 5,
       "n_pred": 40,
-      "n_pred_hit": 33
+      "n_pred_hit": 5
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.268681993372606612424610567349.npz",
       "n_gt": 2,
       "n_gt_hit": 2,
       "n_pred": 32,
-      "n_pred_hit": 32
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.481896905489289144243758063965.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 7,
+      "n_gt_hit": 6,
       "n_pred": 26,
-      "n_pred_hit": 22
+      "n_pred_hit": 6
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.795144877953100782557800472233.npz",
       "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt_hit": 1,
       "n_pred": 41,
-      "n_pred_hit": 33
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.818108478938624509112476496121.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
-      "n_pred": 28,
-      "n_pred_hit": 24
-    },
-    {
-      "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.821126619905759469865221670961.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
-      "n_pred": 22,
-      "n_pred_hit": 19
-    },
-    {
-      "filename": "unified/1.3.6.1.4.1.32722.99.99.10025153101113104678051738059573807863.npz",
       "n_gt": 3,
       "n_gt_hit": 3,
       "n_pred": 28,
-      "n_pred_hit": 18
+      "n_pred_hit": 3
+    },
+    {
+      "filename": "unified/1.3.6.1.4.1.14519.5.2.1.7009.9004.821126619905759469865221670961.npz",
+      "n_gt": 6,
+      "n_gt_hit": 6,
+      "n_pred": 22,
+      "n_pred_hit": 6
+    },
+    {
+      "filename": "unified/1.3.6.1.4.1.32722.99.99.10025153101113104678051738059573807863.npz",
+      "n_gt": 1,
+      "n_gt_hit": 1,
+      "n_pred": 28,
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.10189656126533693830027700178890636528.npz",
-      "n_gt": 4,
-      "n_gt_hit": 3,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 55,
-      "n_pred_hit": 43
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.106057873893318033306402823105162660955.npz",
-      "n_gt": 6,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 37,
-      "n_pred_hit": 26
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.107949837958545340188051814743067526842.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 43,
-      "n_pred_hit": 16
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.110943003968518197094801891361263047246.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 46,
-      "n_pred_hit": 31
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.115481705889313227671301207212303103557.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 28,
-      "n_pred_hit": 13
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.117508088801814432778102339122175813318.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 65,
-      "n_pred_hit": 47
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.123820403277126945698755004894762060738.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 45,
-      "n_pred_hit": 39
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.12747108866907265023948393821781944475.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 23,
-      "n_pred_hit": 14
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.128773047735896257180124687908305104105.npz",
-      "n_gt": 5,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 34,
-      "n_pred_hit": 28
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.128926278323124326227122892876673628992.npz",
-      "n_gt": 6,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 38,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.131412879568304754974090041572500834101.npz",
-      "n_gt": 3,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 77,
-      "n_pred_hit": 35
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.132990275427180258047299122709988177751.npz",
-      "n_gt": 4,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 32,
-      "n_pred_hit": 24
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.133119880749611594412227664089166692625.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 47,
-      "n_pred_hit": 32
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.134665885483081097170942025596804724025.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 28,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.135215329807720298762224639233803726615.npz",
       "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt_hit": 1,
       "n_pred": 38,
-      "n_pred_hit": 16
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.137238664069913459090607209884252504416.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 22,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.148501964032128149026767525547142526917.npz",
-      "n_gt": 5,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 47,
-      "n_pred_hit": 36
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.153276834147574686065527304812011723023.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 43,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.162809756000553423977130110972417075286.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 27,
-      "n_pred_hit": 14
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.163731338550280065283958012088297769646.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 44,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.172869477046284383741632043965175581487.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 67,
-      "n_pred_hit": 32
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.178411231173175720348673559160602339008.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 19,
-      "n_pred_hit": 13
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.183790835743663332697706708306507968880.npz",
-      "n_gt": 4,
-      "n_gt_hit": 3,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 27,
-      "n_pred_hit": 16
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.18980920978253283503547455986547027698.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 52,
-      "n_pred_hit": 30
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.206942160539493097677054709681855158772.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 42,
-      "n_pred_hit": 29
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.208653515448706370744443324726043752532.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 58,
-      "n_pred_hit": 36
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.21279084870790636526998871716862429428.npz",
-      "n_gt": 4,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 78,
-      "n_pred_hit": 35
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.214525121747473742610648599824594081419.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 63,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.216293835820147630521480750222171756193.npz",
-      "n_gt": 4,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 52,
-      "n_pred_hit": 30
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.22221638919802030605341604210472375755.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 70,
-      "n_pred_hit": 31
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.22394892311630219729578387311352226434.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 17,
-      "n_pred_hit": 14
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.228236628951636352700462489638706213296.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 2,
+      "n_gt_hit": 2,
       "n_pred": 27,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.229086466871375754979754857657856136179.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 41,
-      "n_pred_hit": 22
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.234498002018586513014561622416532351021.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 35,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.23507740616018260882925674231000042364.npz",
-      "n_gt": 6,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 32,
-      "n_pred_hit": 16
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.241751635454037945502107878211099846531.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 35,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.244576176805586420365408136704287445477.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 30,
-      "n_pred_hit": 22
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.255025853784899203446122686155522540681.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 43,
-      "n_pred_hit": 26
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.259348788848459942035152612079649240479.npz",
-      "n_gt": 12,
-      "n_gt_hit": 4,
+      "n_gt": 2,
+      "n_gt_hit": 1,
       "n_pred": 61,
-      "n_pred_hit": 46
+      "n_pred_hit": 3
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.266209514014035887588998199271209420062.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 36,
-      "n_pred_hit": 20
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.270122925999621599792092470290560363222.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 97,
-      "n_pred_hit": 69
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.270199938020000768508984793123683354388.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 36,
-      "n_pred_hit": 23
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.270350442679753827899558624420758433856.npz",
-      "n_gt": 5,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 76,
-      "n_pred_hit": 12
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.270403785980565211528172873043974742304.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 39,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.27163918288756179883242987908715991799.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 55,
-      "n_pred_hit": 28
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.273086177637824219673210729422015217653.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 59,
-      "n_pred_hit": 42
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.273960991051192661212269012295991762313.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 15,
-      "n_pred_hit": 12
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.286714454369710809238330584946086450994.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 30,
-      "n_pred_hit": 18
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.297385072710205659328932372753002372228.npz",
-      "n_gt": 5,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 60,
-      "n_pred_hit": 47
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.302109344266356492504227493017548300685.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 33,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.304106541814692740796763034717078973663.npz",
-      "n_gt": 3,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 132,
-      "n_pred_hit": 15
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.305893186340996585959740023939034543492.npz",
-      "n_gt": 4,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 34,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.306575402834487123806203582668480758053.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 2,
+      "n_gt_hit": 2,
       "n_pred": 31,
-      "n_pred_hit": 19
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.309695689942006699082558764031786785731.npz",
       "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt_hit": 0,
       "n_pred": 31,
-      "n_pred_hit": 26
+      "n_pred_hit": 0
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.310480900572747784057306152580725156090.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 53,
-      "n_pred_hit": 33
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.313556114709357749361568836894323373175.npz",
-      "n_gt": 16,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 29,
-      "n_pred_hit": 23
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.319444150675066642787232015693354031469.npz",
-      "n_gt": 4,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 33,
-      "n_pred_hit": 13
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.319502509624499838324422380250566091507.npz",
-      "n_gt": 4,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 37,
-      "n_pred_hit": 21
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.323299273917662793340175416048925265670.npz",
-      "n_gt": 7,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 40,
-      "n_pred_hit": 28
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.324769764121673056263879921586373327827.npz",
-      "n_gt": 3,
-      "n_gt_hit": 3,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 48,
-      "n_pred_hit": 28
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.329442951680186705099520408290272508587.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 54,
-      "n_pred_hit": 35
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.334829371620148215579153071629054323928.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 76,
-      "n_pred_hit": 36
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.335653859022506368478969030388785871393.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 41,
-      "n_pred_hit": 25
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.338404847738647932537412704038341910537.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 26,
-      "n_pred_hit": 16
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.338492042710766420219433034667060617550.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 37,
-      "n_pred_hit": 32
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.338628250485933516055365528576844468634.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 51,
-      "n_pred_hit": 26
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.339431112694281373360788484361361259679.npz",
-      "n_gt": 3,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 32,
-      "n_pred_hit": 17
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.35564153921177930193181412938503193110.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 75,
-      "n_pred_hit": 55
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.3679213111098523290310395238679814282.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 14,
-      "n_pred_hit": 11
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.37586669519747210613497131864713045365.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 36,
-      "n_pred_hit": 25
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.39984086882164931402154484339097427485.npz",
-      "n_gt": 1,
-      "n_gt_hit": 1,
+      "n_gt": 2,
+      "n_gt_hit": 2,
       "n_pred": 29,
-      "n_pred_hit": 20
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.40812172850593977264671028634455343097.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 93,
-      "n_pred_hit": 23
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.41852694611062988770519120014804063279.npz",
-      "n_gt": 6,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 29,
-      "n_pred_hit": 24
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.43789104081084168054505170764020395282.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 40,
-      "n_pred_hit": 33
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.444348748010685948321439732682444349.npz",
-      "n_gt": 3,
-      "n_gt_hit": 3,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 69,
-      "n_pred_hit": 38
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.44445448220781555402708548959664254966.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 42,
-      "n_pred_hit": 29
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.54937781598640373113182231268353798188.npz",
-      "n_gt": 3,
-      "n_gt_hit": 3,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 46,
-      "n_pred_hit": 28
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.56358281344724526176542412513607194838.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 46,
-      "n_pred_hit": 11
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.58422169766222398704519758173146167385.npz",
       "n_gt": 2,
       "n_gt_hit": 2,
       "n_pred": 67,
-      "n_pred_hit": 24
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.60923622658554082330440372953953882674.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 43,
-      "n_pred_hit": 32
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.64071260239972914458990134831754575592.npz",
-      "n_gt": 3,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 33,
-      "n_pred_hit": 28
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.67924465338440983146032786542629509685.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 49,
-      "n_pred_hit": 29
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.87238636499040360278209347010236973547.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 23,
-      "n_pred_hit": 19
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.87271377120659061858903256569497071839.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 36,
-      "n_pred_hit": 22
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.87406248393548395327092514104780156270.npz",
-      "n_gt": 4,
-      "n_gt_hit": 3,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 16,
-      "n_pred_hit": 11
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.88107145983527391588375639804236095522.npz",
       "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 78,
-      "n_pred_hit": 27
+      "n_pred_hit": 2
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.88982575091571617584326829111148473826.npz",
-      "n_gt": 5,
-      "n_gt_hit": 4,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 58,
-      "n_pred_hit": 30
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.92856589697402138233861626090796215557.npz",
-      "n_gt": 2,
+      "n_gt": 1,
       "n_gt_hit": 1,
       "n_pred": 59,
-      "n_pred_hit": 37
+      "n_pred_hit": 1
     },
     {
       "filename": "unified/1.3.6.1.4.1.32722.99.99.96821679453649666499560965236819534594.npz",
-      "n_gt": 2,
-      "n_gt_hit": 2,
+      "n_gt": 1,
+      "n_gt_hit": 1,
       "n_pred": 42,
-      "n_pred_hit": 25
+      "n_pred_hit": 1
     }
   ],
   "_meta": {

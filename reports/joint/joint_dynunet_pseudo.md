@@ -182,12 +182,12 @@ held-out test split, on the 256-cube resample grid (same grid as the voxel metri
 
 | Metric | Value |
 |---|---:|
-| GT nodules (components) | 3,708 |
-| GT nodules hit          | 408 |
-| **Instance recall**     | **0.1100** |
+| GT nodules (components) | 944 |
+| GT nodules hit          | 759 |
+| **Instance recall**     | **0.8040** |
 | Predicted components    | 2,289 |
-| Predicted components hitting GT | 2,145 |
-| **Instance precision**  | **0.9371** |
+| Predicted components hitting GT | 779 |
+| **Instance precision**  | **0.3403** |
 
 No minimum-size filtering is applied — every predicted component
 counts, so single-voxel false positives lower instance precision.

@@ -123,12 +123,12 @@ held-out test split, on the native voxel grid.
 
 | Metric | Value |
 |---|---:|
-| GT nodules (components) | 4,215 |
-| GT nodules hit          | 501 |
-| **Instance recall**     | **0.1189** |
+| GT nodules (components) | 947 |
+| GT nodules hit          | 851 |
+| **Instance recall**     | **0.8986** |
 | Predicted components    | 17,848 |
-| Predicted components hitting GT | 8,313 |
-| **Instance precision**  | **0.4658** |
+| Predicted components hitting GT | 945 |
+| **Instance precision**  | **0.0529** |
 
 No minimum-size filtering is applied — every predicted component
 counts, so single-voxel false positives lower instance precision.
