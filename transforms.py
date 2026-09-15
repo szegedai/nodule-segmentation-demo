@@ -39,6 +39,7 @@ from monai.transforms import (
     RandShiftIntensityd,
     RandZoomd,
     Resized,
+    ResizeWithPadOrCropd,
 )
 
 KEYS = ["image", "label"]
@@ -163,6 +164,9 @@ def get_roi_train_transforms(preproc_cfg=None, training_cfg=None):
                 pos         = float(tcfg.get("pos_neg_ratio", 1.0)),
                 neg         = 1.0,
             ),
+            # some series have slices smaller than the patch (e.g. 254x254);
+            # pad them so every patch in the batch is the same size
+            ResizeWithPadOrCropd(keys=KEYS, spatial_size=patch),
             EnsureTyped(keys=KEYS, dtype="float32", track_meta=False),
         ])
     return Compose([
