@@ -1,9 +1,13 @@
-"""Generate MD reports for the sliding-window (SW / SW-ce10) models.
+"""Generate MD metric reports for the nodule and joint models.
 
-The bundled reports/*_sw*.md and reports/joint/*_sw*.md files were
-produced by this script from the eval_metrics_* / config pairs; rerun it
-after re-evaluating a model to refresh its report, then render the PDF
-with scripts/md_to_pdf.py.
+Covers both recipes — the config's `training.mode` selects the
+template branch: `resize` (paper baseline; adds the HuggingFace
+"How to load & run" section for the published models) and
+`sliding_window` (SW / SW-ce10 variants). The bundled
+reports/*_sw*.md files were produced by this script and regenerate
+byte-identically; the three legacy resize baseline reports predate it
+(hand-maintained), but any re-evaluated resize model can be reported
+with it. Render the PDF with scripts/md_to_pdf.py.
 
 Usage:
     gen_sw_reports.py <metrics.json> <config.yaml> <out.md>
@@ -20,6 +24,36 @@ from pathlib import Path
 import yaml
 
 
+HF_REPOS = {
+    "segresnet_small": "szabopeter/nodule-segresnet-3d-small",
+    "segresnet_wide":  "szabopeter/nodule-segresnet-3d-wide",
+    "dynunet":         "szabopeter/nodule-dynunet-3d",
+    "joint_segresnet_ex_lidc": "szabopeter/joint-segresnet-3d-ex-lidc",
+    "joint_segresnet_pseudo":  "szabopeter/joint-segresnet-3d-pseudo-lidc",
+    "joint_dynunet_ex_lidc":   "szabopeter/joint-dynunet-3d-ex-lidc",
+    "joint_dynunet_pseudo":    "szabopeter/joint-dynunet-3d-pseudo-lidc",
+}
+
+
+def hf_section(stem):
+    repo = HF_REPOS.get(stem)
+    if not repo:
+        return ""
+    return f"""## How to load & run
+
+Pre-trained weights are hosted at
+[`{repo}`](https://huggingface.co/{repo}):
+
+```bash
+huggingface-cli download {repo} --local-dir ./ckpt
+```
+
+See the repo README ("Inference on a new CT") for running the full
+pipeline with `inference.py`.
+
+"""
+
+
 def load(cfg_path, m_path):
     cfg = yaml.safe_load(Path(cfg_path).read_text())
     m = json.load(open(m_path))
@@ -30,13 +64,15 @@ def nodule_report(cfg_path, m_path):
     cfg, m = load(cfg_path, m_path)
     arch = cfg["model"]["name"]
     init_f = cfg["model"].get("init_filters", "n/a")
-    patch = tuple(cfg["preprocessing"]["patch_size"])
+    is_sw  = cfg.get("training", {}).get("mode", "resize") == "sliding_window"
+    patch = tuple(cfg["preprocessing"].get("patch_size", [128, 128, 128]))
+    tsize = tuple(cfg["preprocessing"].get("target_size", [256, 256, 256]))
     epochs = cfg["training"]["epochs"]
     batch  = cfg["training"]["batch_size"]
-    ppv    = cfg["training"]["patches_per_volume"]
-    ratio  = cfg["training"]["pos_neg_ratio"]
-    ovl    = cfg["inference"]["sw_overlap"]
-    swbs   = cfg["inference"]["sw_batch"]
+    ppv    = cfg["training"].get("patches_per_volume", 1)
+    ratio  = cfg["training"].get("pos_neg_ratio", 2)
+    ovl    = cfg.get("inference", {}).get("sw_overlap", 0.5)
+    swbs   = cfg.get("inference", {}).get("sw_batch", 4)
     split  = Path(cfg["data"]["split_json"]).stem
     ckpt_name = Path(m["_meta"]["checkpoint"]).name
     ep     = m["_meta"].get("epoch", "?")
@@ -51,25 +87,57 @@ def nodule_report(cfg_path, m_path):
     base_stem = Path(cfg_path).stem.replace("_ce10", "").replace("_sw", "_v2")
     diff_txt = ("the differences are a reduced nodule CE weight (10 instead of 100) and the inference recipe:"
                 if is_ce10 else "the only difference is inference recipe:")
+    stem = Path(cfg_path).stem
+    hf_sec = "" if is_sw else hf_section(stem)
+    if is_sw:
+        title_recipe = " — sliding-window (128³)"
+        task_intro = ("lung-bbox-cropped. Same task as the paper's `" + base_stem +
+            "`\nmodel — " + diff_txt + " **sliding-window over 128³\n"
+            "patches at native resolution** rather than a single forward on a 256³\nresample.")
+        input_bullets = (
+            "- **Input**   `(1, H, W, D)` CT crop, intensity-normalised to `[0, 1]`,\n"
+            "              lung-bbox + 20-voxel padding, kept at native voxel grid.\n"
+            "- **Training input** 128³ patches sampled via `RandCropByPosNegLabeld` at\n"
+            f"              a ratio of `pos:neg = {ratio}:1`, `num_samples = {ppv}` per volume.\n"
+            f"- **Inference** MONAI `sliding_window_inference`, ROI `{patch}`,\n"
+            f"              `overlap = {ovl}`, `sw_batch_size = {swbs}`, Gaussian\n"
+            "              blending, single output at the input resolution.")
+        crop_bullet = "medium-model fallback), + 20-vox padding. No resampling."
+        batch_row = (f"| Batch size         | {batch} volumes × {ppv} patches = {batch*ppv} patches / step |\n"
+                     f"| Patch size         | {patch[0]}³ (positive-biased random crop, `pos:neg = {ratio}:1`) |")
+        pred_src = "`sliding_window_inference`"
+        interp = ("Sliding-window inference at 128³ trades global context (a 256³ resample\n"
+            "sees the whole lung in one pass) for preserved resolution (no down-\n"
+            "sampling of small nodules). On this unified corpus the trade tends to\n"
+            "be neutral-to-negative on nodule Dice — small-nodule gains do not\n"
+            "compensate for lost global context on typical test cases.")
+    else:
+        title_recipe = f" — resize ({tsize[0]}³)"
+        task_intro = (f"lung-bbox-cropped, on the paper's baseline recipe: the bbox crop is\n"
+            f"trilinearly resampled to {tsize[0]}³ and segmented in a single forward\npass.")
+        input_bullets = (
+            "- **Input**   `(1, H, W, D)` CT crop, intensity-normalised to `[0, 1]`,\n"
+            "              lung-bbox + 20-voxel padding.\n"
+            "- **Training / inference input** the crop trilinearly resampled to\n"
+            f"              `{tsize}`; one forward pass per volume.")
+        crop_bullet = f"medium-model fallback), + 20-vox padding, resampled to {tsize[0]}³."
+        batch_row = (f"| Batch size         | {batch} volumes |\n"
+                     f"| Input size         | {tsize[0]}³ (trilinear resample of the bbox crop) |")
+        pred_src = f"a single {tsize[0]}³ forward"
+        interp = (f"The {tsize[0]}³ resample gives the model the whole lung in one pass\n"
+            "(global anatomical context) at the cost of downsampling resolution for\n"
+            "small nodules in large crops — the trade the sliding-window variants\n"
+            "try to reverse, so far unsuccessfully (see the `*_sw*` reports).")
     title_arch = "DynUNet / 3D U-Net" if arch == "dynunet" else f"SegResNet ({variant})"
 
-    return f"""# Lung Nodule Segmentation — {title_arch} — sliding-window (128³){title_suffix}
+    return f"""# Lung Nodule Segmentation — {title_arch}{title_recipe}{title_suffix}
 
 ## 1. Task
 
 Voxel-level segmentation of pulmonary nodules in 3D chest CT volumes,
-lung-bbox-cropped. Same task as the paper's `{base_stem}`
-model — {diff_txt} **sliding-window over 128³
-patches at native resolution** rather than a single forward on a 256³
-resample.
+{task_intro}
 
-- **Input**   `(1, H, W, D)` CT crop, intensity-normalised to `[0, 1]`,
-              lung-bbox + 20-voxel padding, kept at native voxel grid.
-- **Training input** 128³ patches sampled via `RandCropByPosNegLabeld` at
-              a ratio of `pos:neg = {ratio}:1`, `num_samples = {ppv}` per volume.
-- **Inference** MONAI `sliding_window_inference`, ROI `{patch}`,
-              `overlap = {ovl}`, `sw_batch_size = {swbs}`, Gaussian
-              blending, single output at the input resolution.
+{input_bullets}
 - **Output**  `(2, H, W, D)` softmax logits: 0 = background, 1 = nodule.
 
 ## 2. Model
@@ -96,7 +164,7 @@ Same unified corpus + split as the paper's 256³ baselines:
 - **Split**: `{split}.json` — patient-grouped, dataset-stratified.
   1 683 train / 297 val / 325 test series.
 - **Lung crop**: per-series 3D bbox from `bboxes_unified.json` (lung ROI +
-  medium-model fallback), + 20-vox padding. No resampling.
+  {crop_bullet}
 - **Class imbalance**: nodule voxels are ~10⁻⁵ of the total — see §7.
 
 ## 4. Training
@@ -108,8 +176,7 @@ Same unified corpus + split as the paper's 256³ baselines:
 | Learning rate      | 1 × 10⁻⁵ |
 | Weight decay       | 1 × 10⁻⁵ |
 | LR schedule        | Cosine annealing, T_max = {epochs}, η_min = 1 × 10⁻⁶ |
-| Batch size         | {batch} volumes × {ppv} patches = {batch*ppv} patches / step |
-| Patch size         | {patch[0]}³ (positive-biased random crop, `pos:neg = {ratio}:1`) |
+{batch_row}
 | Epochs             | {epochs} |
 | Random seed        | 42 |
 | Mixed precision    | bf16 (autocast, no GradScaler) |
@@ -124,7 +191,7 @@ metrics JSON).
 Evaluated on the `{split}` **test** split ({m['n_cases']} series held
 out — never seen during training or model selection). Predictions taken
 as `argmax` over the 2-channel softmax output from
-`sliding_window_inference`. All voxel-level metrics are micro-averaged
+{pred_src}. All voxel-level metrics are micro-averaged
 over the whole split.
 
 ## 6. Results
@@ -164,18 +231,14 @@ Voxels evaluated: {m['n_voxels']:,}. Cases: {m['n_cases']}.
 
 ## 7. Notes on interpretation
 
-Sliding-window inference at 128³ trades global context (a 256³ resample
-sees the whole lung in one pass) for preserved resolution (no down-
-sampling of small nodules). On this unified corpus the trade tends to
-be neutral-to-negative on nodule Dice — small-nodule gains do not
-compensate for lost global context on typical test cases.
+{interp}
 
 Class-imbalance caveats are unchanged from the 256³ reports: Accuracy
 is trivially ~1, mIoU is dominated by IoU_bg, and Dice / F1 (micro) is
 the honest voxel-level summary. Per-case mean weights each patient
 equally regardless of nodule volume.
 
-## 8. Reproducibility
+{hf_sec}## 8. Reproducibility
 
 - Config       `{cfg_path}`
 - Checkpoint   `{m['_meta']['checkpoint']}`
@@ -188,13 +251,15 @@ def joint_report(cfg_path, m_path):
     cfg, m = load(cfg_path, m_path)
     arch = cfg["model"]["name"]
     init_f = cfg["model"].get("init_filters", "n/a")
-    patch = tuple(cfg["preprocessing"]["patch_size"])
+    is_sw  = cfg.get("training", {}).get("mode", "resize") == "sliding_window"
+    patch = tuple(cfg["preprocessing"].get("patch_size", [128, 128, 128]))
+    tsize = tuple(cfg["preprocessing"].get("target_size", [256, 256, 256]))
     epochs = cfg["training"]["epochs"]
     batch  = cfg["training"]["batch_size"]
-    ppv    = cfg["training"]["patches_per_volume"]
-    ratios = cfg["training"]["class_sample_ratios"]
-    ovl    = cfg["inference"]["sw_overlap"]
-    swbs   = cfg["inference"]["sw_batch"]
+    ppv    = cfg["training"].get("patches_per_volume", 1)
+    ratios = cfg["training"].get("class_sample_ratios", [0.2, 0.3, 0.5])
+    ovl    = cfg.get("inference", {}).get("sw_overlap", 0.5)
+    swbs   = cfg.get("inference", {}).get("sw_batch", 4)
     split  = Path(cfg["data"]["split_json"]).stem
     ep     = m["_meta"].get("epoch", "?")
     n_params = m["_meta"].get("params", "?")
@@ -207,6 +272,42 @@ def joint_report(cfg_path, m_path):
     title_suffix = ", reduced CE weight" if is_ce10 else ""
     diff_txt = ("the differences are a reduced nodule CE\nweight (10 instead of 100) and the inference recipe:"
                 if is_ce10 else "the only difference is\ninference recipe:")
+    stem = Path(cfg_path).stem
+    hf_sec = "" if is_sw else hf_section(stem)
+    base_stem = stem.replace('_ce10','').replace('_sw','')
+    if is_sw:
+        title_recipe = " — sliding-window (128³)"
+        task_intro = ("Same task as the paper's\n`" + base_stem + "` — " + diff_txt +
+            " **sliding-window over 128³ patches at native\n"
+            "resolution** rather than a single forward on a 256³ resample.")
+        input_bullets = (
+            "- **Input**   `(1, H, W, D)` CT at native voxel grid.\n"
+            "- **Training input** 128³ patches sampled via `RandCropByLabelClassesd`\n"
+            f"              with class-balanced ratios `[bg, lung, nodule] = {ratios}`,\n"
+            f"              `num_samples = {ppv}` per volume.\n"
+            f"- **Inference** MONAI `sliding_window_inference`, ROI `{patch}`,\n"
+            f"              `overlap = {ovl}`, `sw_batch_size = {swbs}`, Gaussian\n"
+            "              blending, output at input resolution.")
+        batch_row = (f"| Batch size         | {batch} volumes × {ppv} patches = {batch*ppv} patches / step |\n"
+                     f"| Patch size         | {patch[0]}³ (class-biased random crop, ratios `[bg, lung, nodule] = {ratios}`) |")
+        interp = ("Sliding-window inference at 128³ trades global lung context for\n"
+            "preserved local resolution. On this corpus the trade tends to be\n"
+            "neutral-to-negative on nodule Dice compared to the 256³ resize\n"
+            "baseline — patches see only ~15% of a typical lung volume, which\n"
+            "limits anatomy-conditional reasoning.")
+    else:
+        title_recipe = f" — resize ({tsize[0]}³)"
+        task_intro = (f"The paper's baseline recipe: the full CT is trilinearly\n"
+            f"resampled to {tsize[0]}³ (no ROI stage, no bbox crop) and segmented\nin a single forward pass.")
+        input_bullets = (
+            f"- **Input / inference input**   `(1, H, W, D)` CT trilinearly resampled to `{tsize}`.\n"
+            "- **Output**  argmax over 3-class softmax, resampled back to the native grid.")
+        batch_row = (f"| Batch size         | {batch} volumes |\n"
+                     f"| Input size         | {tsize[0]}³ (trilinear resample of the full CT) |")
+        interp = (f"The {tsize[0]}³ full-volume resample gives the model global lung\n"
+            "context in one pass at the cost of small-nodule resolution — the\n"
+            "trade the sliding-window variants try to reverse, so far\n"
+            "unsuccessfully (see the `*_sw*` reports).")
 
     # Per-class metrics for the joint task
     per_class = m["per_class"]
@@ -214,22 +315,14 @@ def joint_report(cfg_path, m_path):
     lung = per_class.get("lung",       {})
     nod  = per_class.get("nodule",     {})
 
-    return f"""# Joint 3-class Lung Segmentation — {title_arch}, {variant} — sliding-window (128³){title_suffix}
+    return f"""# Joint 3-class Lung Segmentation — {title_arch}, {variant}{title_recipe}{title_suffix}
 
 ## 1. Task
 
 End-to-end 3-class semantic segmentation of a full chest CT into
-{{background, lung, nodule}}. Same task as the paper's
-`{Path(cfg_path).stem.replace('_ce10','').replace('_sw','')}` — {diff_txt} **sliding-window over 128³ patches at native
-resolution** rather than a single forward on a 256³ resample.
+{{background, lung, nodule}}. {task_intro}
 
-- **Input**   `(1, H, W, D)` CT at native voxel grid.
-- **Training input** 128³ patches sampled via `RandCropByLabelClassesd`
-              with class-balanced ratios `[bg, lung, nodule] = {ratios}`,
-              `num_samples = {ppv}` per volume.
-- **Inference** MONAI `sliding_window_inference`, ROI `{patch}`,
-              `overlap = {ovl}`, `sw_batch_size = {swbs}`, Gaussian
-              blending, output at input resolution.
+{input_bullets}
 - **Output**  `(3, H, W, D)` softmax logits: 0 = bg, 1 = lung, 2 = nodule.
 
 ## 2. Model
@@ -264,8 +357,7 @@ resolution** rather than a single forward on a 256³ resample.
 | Learning rate      | 1 × 10⁻⁵ |
 | Weight decay       | 1 × 10⁻⁵ |
 | LR schedule        | Cosine annealing, T_max = {epochs}, η_min = 1 × 10⁻⁶ |
-| Batch size         | {batch} volumes × {ppv} patches = {batch*ppv} patches / step |
-| Patch size         | {patch[0]}³ (class-biased random crop, ratios `[bg, lung, nodule] = {ratios}`) |
+{batch_row}
 | Epochs             | {epochs} |
 | Random seed        | 42 |
 | Mixed precision    | bf16 |
@@ -320,13 +412,9 @@ Lung Dice at ≈ 0.98 is essentially saturated across all architectures
 and inference recipes — the lung is a large, well-defined foreground
 class. Nodule Dice is the real signal.
 
-Sliding-window inference at 128³ trades global lung context for
-preserved local resolution. On this corpus the trade tends to be
-neutral-to-negative on nodule Dice compared to the 256³ resize
-baseline — patches see only ~15% of a typical lung volume, which
-limits anatomy-conditional reasoning.
+{interp}
 
-## 8. Reproducibility
+{hf_sec}## 8. Reproducibility
 
 - Config       `{cfg_path}`
 - Checkpoint   `{m['_meta']['checkpoint']}`

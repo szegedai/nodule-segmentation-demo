@@ -449,7 +449,7 @@ scripts/build_unified_split.py      catalog → patient-grouped split JSON
 scripts/precompute_bboxes_unified.py 2D ROI masks → per-series lung bbox JSON
 scripts/make_roi_2d.py              3D volumes → 2D ROI training slices (GT or predicted)
 scripts/instance_metrics.py         per-nodule instance recall/precision (26-connectivity)
-scripts/gen_sw_report.py            regenerates the *_sw*/ce10 markdown reports from metrics JSONs
+scripts/gen_report.py               regenerates model reports (resize + SW/ce10) from metrics JSONs
 scripts/md_to_pdf.py                renders report md → pdf (needs markdown + weasyprint)
 container/nodule-seg.def            Apptainer recipe (+ pinned requirements_train.txt)
 slurm/{train,eval}.sh               generic SLURM launchers (site-specific headers)
