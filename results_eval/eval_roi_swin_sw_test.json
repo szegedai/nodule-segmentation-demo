@@ -1,0 +1,33 @@
+{
+  "n_pixels": 9789871397,
+  "n_slices": 45751,
+  "tp": 599975474,
+  "fp": 9986098,
+  "fn": 10253716,
+  "tn": 9169656109,
+  "mIoU": 0.9825820358625785,
+  "IoU_fg": 0.9673664703344107,
+  "IoU_bg": 0.9977976013907465,
+  "Accuracy": 0.9979325761106318,
+  "Precision": 0.9836283161785805,
+  "Recall": 0.9831969427748941,
+  "Dice_micro": 0.9834125821713113,
+  "Dice_per_slice": {
+    "mean": 0.9611728596127616,
+    "std": 0.12575425760250883,
+    "min": 0.0,
+    "median": 0.9898155927658081,
+    "max": 1.0,
+    "p05": 0.8691554665565491,
+    "p95": 1.0
+  },
+  "_meta": {
+    "config": "configs/roi_swin_sw.yaml",
+    "checkpoint": "checkpoints/roi_swin_sw/best_model.pth",
+    "split": "test",
+    "epoch": 89,
+    "val_dice_at_save": 0.9701780080795288,
+    "model_name": "swinunetr",
+    "spatial_dims": 2
+  }
+}

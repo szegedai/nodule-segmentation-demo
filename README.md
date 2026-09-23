@@ -166,7 +166,7 @@ and performs well.**
 
 ### Sliding-window variants (not paper baselines)
 
-Seven `*_sw.yaml` configs — the same three two-stage nodule
+Nine `*_sw.yaml` configs — the two 2D ROI models plus the same three two-stage nodule
 architectures and four joint variants as above, but trained with
 **random 128³ positive-biased patches** at native resolution and
 evaluated with MONAI's `sliding_window_inference` instead of the
@@ -349,6 +349,23 @@ python train.py --config configs/roi_swin.yaml # SwinUNETR 2D (small)
 The same `train.py` handles both tasks; the `task:` field in the YAML
 routes to the 2D ROI path (`Roi2DDataset`, sigmoid + threshold
 post-proc, plain `DiceLoss`) instead of the 3D nodule path.
+
+### Sliding-window ROI variants (`roi_sw.yaml`, `roi_swin_sw.yaml`)
+
+Native-resolution recipe: 256×256 patch training + 2D sliding-window
+inference (overlap 0.5, Gaussian blending) instead of resizing each
+slice. Held-out test split (45,751 slices):
+
+| Model | Dice (micro) | Precision | Recall | Per-slice mean | Per-slice p05 |
+|---|---:|---:|---:|---:|---:|
+| `roi_sw` (SegResNet) | 0.9823 | 0.9832 | 0.9814 | 0.9511 | 0.8352 |
+| `roi_swin_sw` (SwinUNETR) | **0.9834** | **0.9836** | **0.9832** | **0.9612** | **0.8692** |
+
+Both models avoid the resize-recipe SegResNet's per-slice p05 = 0.0
+failure on near-empty apex/base slices. Full reports:
+[`reports/roi_segresnet_sw.md`](reports/roi_segresnet_sw.md),
+[`reports/roi_swinunetr_sw.md`](reports/roi_swinunetr_sw.md); metric
+JSONs under `results_eval/`.
 
 ### Downloading a pre-trained ROI checkpoint
 
