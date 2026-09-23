@@ -150,7 +150,10 @@ def main():
     eval_ds = build_eval_dataset(task, cfg, val_tf, split_name=args.split)
     print(f"{args.split} slices: {len(eval_ds):,}", flush=True)
 
-    batch = args.batch or cfg.get("training", {}).get("batch_size", 16)
+    sw = cfg.get("training", {}).get("mode", "resize") == "sliding_window"
+    # SW mode evaluates native-resolution slices of varying size — they
+    # cannot be batched together
+    batch = args.batch or (1 if sw else cfg.get("training", {}).get("batch_size", 16))
     val_loader = DataLoader(eval_ds, batch_size=batch, shuffle=False,
                             num_workers=args.workers, pin_memory=True)
 
