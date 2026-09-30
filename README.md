@@ -219,6 +219,11 @@ nodule Dice (micro), same split as above:
 | `joint_dynunet_ex_lidc_sw_ce10`   | 0.3517 | 0.4309 | +0.079 | 0.219 → 0.290 |
 | `joint_dynunet_pseudo_sw_ce10`    | 0.4021 | 0.4403 | +0.038 | 0.263 → 0.300 |
 
+Pre-trained weights of the ce10 variants are on HuggingFace:
+[`szabopeter/nodule-segresnet-3d-small-sw`](https://huggingface.co/szabopeter/nodule-segresnet-3d-small-sw),
+[`szabopeter/nodule-segresnet-3d-wide-sw`](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-sw),
+[`szabopeter/nodule-dynunet-3d-sw`](https://huggingface.co/szabopeter/nodule-dynunet-3d-sw).
+
 The lower weight helps consistently (best SW model is now
 `segresnet_wide_sw_ce10` at 0.606) but closes only part of the gap to
 the 256³ resize baselines — the loss weighting explains some, not all,
@@ -362,7 +367,11 @@ slice. Held-out test split (45,751 slices):
 | `roi_swin_sw` (SwinUNETR) | **0.9834** | **0.9836** | **0.9832** | **0.9612** | **0.8692** |
 
 Both models avoid the resize-recipe SegResNet's per-slice p05 = 0.0
-failure on near-empty apex/base slices. Full reports:
+failure on near-empty apex/base slices. Pre-trained weights:
+[`szabopeter/roi-segresnet-2d-sw`](https://huggingface.co/szabopeter/roi-segresnet-2d-sw),
+[`szabopeter/roi-swinunetr-2d-sw`](https://huggingface.co/szabopeter/roi-swinunetr-2d-sw).
+All models of the project are collected at
+[huggingface.co/collections/szabopeter/lung-nodule-segmentation](https://huggingface.co/collections/szabopeter/lung-nodule-segmentation-6abce4bec246c6977548f23b). Full reports:
 [`reports/roi_segresnet_sw.md`](reports/roi_segresnet_sw.md),
 [`reports/roi_swinunetr_sw.md`](reports/roi_swinunetr_sw.md); metric
 JSONs under `results_eval/`.
