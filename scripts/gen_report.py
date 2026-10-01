@@ -25,13 +25,13 @@ import yaml
 
 
 HF_REPOS = {
-    "segresnet_small": "szabopeter/nodule-segresnet-3d-small",
-    "segresnet_wide":  "szabopeter/nodule-segresnet-3d-wide",
-    "dynunet":         "szabopeter/nodule-dynunet-3d",
-    "joint_segresnet_ex_lidc": "szabopeter/joint-segresnet-3d-ex-lidc",
-    "joint_segresnet_pseudo":  "szabopeter/joint-segresnet-3d-pseudo-lidc",
-    "joint_dynunet_ex_lidc":   "szabopeter/joint-dynunet-3d-ex-lidc",
-    "joint_dynunet_pseudo":    "szabopeter/joint-dynunet-3d-pseudo-lidc",
+    "segresnet_small": "HalmosiL/nodule-segresnet-3d-small",
+    "segresnet_wide":  "HalmosiL/nodule-segresnet-3d-wide",
+    "dynunet":         "HalmosiL/nodule-dynunet-3d",
+    "joint_segresnet_ex_lidc": "HalmosiL/joint-segresnet-3d-ex-lidc",
+    "joint_segresnet_pseudo":  "HalmosiL/joint-segresnet-3d-pseudo-lidc",
+    "joint_dynunet_ex_lidc":   "HalmosiL/joint-dynunet-3d-ex-lidc",
+    "joint_dynunet_pseudo":    "HalmosiL/joint-dynunet-3d-pseudo-lidc",
 }
 
 
@@ -84,14 +84,14 @@ def nodule_report(cfg_path, m_path):
     nod_w = int(float(loss_cfg.get("ce_nodule_weight", 100)))
     is_ce10 = Path(cfg_path).stem.endswith("_ce10")
     title_suffix = ""
-    base_stem = Path(cfg_path).stem.replace("_ce10", "").replace("_sw", "_v2")
+    base_stem = Path(cfg_path).stem.replace("_ce10", "").replace("_sw", "")
     diff_txt = ("the differences are a reduced nodule CE weight (10 instead of 100) and the inference recipe:"
                 if is_ce10 else "the only difference is inference recipe:")
     stem = Path(cfg_path).stem
     hf_sec = "" if is_sw else hf_section(stem)
     if is_sw:
         title_recipe = f" — sliding-window (128³), CE weight {nod_w}"
-        task_intro = ("lung-bbox-cropped. Same task as the paper's `" + base_stem +
+        task_intro = ("lung-bbox-cropped. Same task as the earlier resize-recipe\n`" + base_stem +
             "`\nmodel — " + diff_txt + " **sliding-window over 128³\n"
             "patches at native resolution** rather than a single forward on a 256³\nresample.")
         input_bullets = (
@@ -113,7 +113,7 @@ def nodule_report(cfg_path, m_path):
             "compensate for lost global context on typical test cases.")
     else:
         title_recipe = f" — resize ({tsize[0]}³)"
-        task_intro = (f"lung-bbox-cropped, on the paper's baseline recipe: the bbox crop is\n"
+        task_intro = (f"lung-bbox-cropped, on the earlier resize recipe: the bbox crop is\n"
             f"trilinearly resampled to {tsize[0]}³ and segmented in a single forward\npass.")
         input_bullets = (
             "- **Input**   `(1, H, W, D)` CT crop, intensity-normalised to `[0, 1]`,\n"
@@ -153,7 +153,7 @@ Voxel-level segmentation of pulmonary nodules in 3D chest CT volumes,
 
 ## 3. Data
 
-Same unified corpus + split as the paper's 256³ baselines:
+Same unified corpus + split as the resize-recipe 256³ models:
 
 | Source          | Role |
 |-----------------|------|
@@ -277,7 +277,7 @@ def joint_report(cfg_path, m_path):
     base_stem = stem.replace('_ce10','').replace('_sw','')
     if is_sw:
         title_recipe = f" — sliding-window (128³), CE weight {nod_w}"
-        task_intro = ("Same task as the paper's\n`" + base_stem + "` — " + diff_txt +
+        task_intro = ("Same task as the earlier resize-recipe\n`" + base_stem + "` — " + diff_txt +
             " **sliding-window over 128³ patches at native\n"
             "resolution** rather than a single forward on a 256³ resample.")
         input_bullets = (
@@ -297,7 +297,7 @@ def joint_report(cfg_path, m_path):
             "limits anatomy-conditional reasoning.")
     else:
         title_recipe = f" — resize ({tsize[0]}³)"
-        task_intro = (f"The paper's baseline recipe: the full CT is trilinearly\n"
+        task_intro = (f"The earlier resize recipe: the full CT is trilinearly\n"
             f"resampled to {tsize[0]}³ (no ROI stage, no bbox crop) and segmented\nin a single forward pass.")
         input_bullets = (
             f"- **Input / inference input**   `(1, H, W, D)` CT trilinearly resampled to `{tsize}`.\n"

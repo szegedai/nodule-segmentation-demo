@@ -3,7 +3,7 @@
 ## 1. Task
 
 Per-slice binary lung segmentation of axial CT slices at the native
-1 mm grid. Same task as the paper's resize-recipe ROI baselines — the
+1 mm grid. Same task as the earlier resize-recipe ROI models — the
 difference is the recipe: **256×256 patch training + 2D sliding-window
 inference at native resolution** instead of resizing each slice to
 256×256 (which distorts the lung outline on non-square slices).

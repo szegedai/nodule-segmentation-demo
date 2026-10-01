@@ -3,7 +3,7 @@
 ## 1. Task
 
 End-to-end 3-class semantic segmentation of a full chest CT into
-{background, lung, nodule}. Same task as the paper's
+{background, lung, nodule}. Same task as the earlier resize-recipe
 `joint_segresnet_pseudo` — the only difference is
 inference recipe: **sliding-window over 128³ patches at native
 resolution** rather than a single forward on a 256³ resample.

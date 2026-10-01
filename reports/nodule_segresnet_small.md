@@ -126,11 +126,11 @@ summary.
 ## 8. How to load & run inference
 
 Pre-trained weights are hosted at
-[`szabopeter/nodule-segresnet-3d-small`](https://huggingface.co/szabopeter/nodule-segresnet-3d-small). Download and
+[`HalmosiL/nodule-segresnet-3d-small`](https://huggingface.co/HalmosiL/nodule-segresnet-3d-small). Download and
 load directly:
 
 ```bash
-huggingface-cli download szabopeter/nodule-segresnet-3d-small --local-dir ./ckpt
+huggingface-cli download HalmosiL/nodule-segresnet-3d-small --local-dir ./ckpt
 ```
 
 ```python
@@ -161,8 +161,8 @@ with torch.no_grad():
 
 This model expects **lung-bbox-cropped** input. A separate 2D ROI model
 is needed to produce that bbox — see the accompanying ROI checkpoints
-([`szabopeter/roi-segresnet-2d`](https://huggingface.co/szabopeter/roi-segresnet-2d)
-or [`szabopeter/roi-swinunetr-2d`](https://huggingface.co/szabopeter/roi-swinunetr-2d)),
+([`HalmosiL/roi-segresnet-2d`](https://huggingface.co/HalmosiL/roi-segresnet-2d)
+or [`HalmosiL/roi-swinunetr-2d`](https://huggingface.co/HalmosiL/roi-swinunetr-2d)),
 or use the demo's `inference.py` which chains them for you.
 
 ## Instance-level metrics (per-nodule)
@@ -198,5 +198,5 @@ Produced by `scripts/instance_metrics.py --config configs/segresnet_small.yaml
 
 Companion two-stage nodule models on HuggingFace:
 
-- [`szabopeter/nodule-segresnet-3d-wide`](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide) — wider SegResNet (paper's best two-stage)
-- [`szabopeter/nodule-dynunet-3d`](https://huggingface.co/szabopeter/nodule-dynunet-3d) — DynUNet (3D U-Net)
+- [`HalmosiL/nodule-segresnet-3d-wide`](https://huggingface.co/HalmosiL/nodule-segresnet-3d-wide) — wider SegResNet (resize recipe)
+- [`HalmosiL/nodule-dynunet-3d`](https://huggingface.co/HalmosiL/nodule-dynunet-3d) — DynUNet (3D U-Net)

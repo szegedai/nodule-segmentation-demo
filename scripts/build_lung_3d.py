@@ -19,7 +19,7 @@ Prerequisites
 - ${DATA_ROOT}/roi_sem_seg_2d/*_*.npz — per-slice GT lung masks
                                         (only NLST + NSCLC have these)
 - A trained 2D ROI checkpoint. Download from HuggingFace:
-    huggingface-cli download szabopeter/roi-segresnet-2d --local-dir ./ckpts/roi
+    huggingface-cli download HalmosiL/roi-segresnet-2d --local-dir ./ckpts/roi
 
 Usage
 -----

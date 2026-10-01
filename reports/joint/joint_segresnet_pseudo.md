@@ -129,11 +129,11 @@ the order of 10⁻⁵. This shapes what each metric means here:
 ## 8. How to load & run inference
 
 The pre-trained weights are hosted at
-[`szabopeter/joint-segresnet-3d-pseudo-lidc`](https://huggingface.co/szabopeter/joint-segresnet-3d-pseudo-lidc). Download and load
+[`HalmosiL/joint-segresnet-3d-pseudo-lidc`](https://huggingface.co/HalmosiL/joint-segresnet-3d-pseudo-lidc). Download and load
 directly:
 
 ```bash
-huggingface-cli download szabopeter/joint-segresnet-3d-pseudo-lidc --local-dir ./ckpt
+huggingface-cli download HalmosiL/joint-segresnet-3d-pseudo-lidc --local-dir ./ckpt
 ```
 
 ```python
@@ -196,4 +196,4 @@ Produced by `scripts/instance_metrics.py --config configs/joint_segresnet_pseudo
 - Metrics JSON `checkpoints/joint_segresnet_pseudo/eval_metrics_joint_test.json`
 - Command      `python eval_metrics_joint.py --config configs/joint_segresnet_pseudo.yaml --ckpt checkpoints/joint_segresnet_pseudo/best_model.pth --split test`
 
-Companion variant: [`szabopeter/joint-segresnet-3d-ex-lidc`](https://huggingface.co/szabopeter/joint-segresnet-3d-ex-lidc) — same architecture, ex-LIDC data variant.
+Companion variant: [`HalmosiL/joint-segresnet-3d-ex-lidc`](https://huggingface.co/HalmosiL/joint-segresnet-3d-ex-lidc) — same architecture, ex-LIDC data variant.

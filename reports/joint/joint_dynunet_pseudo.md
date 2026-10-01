@@ -130,11 +130,11 @@ the order of 10⁻⁵. This shapes what each metric means here:
 ## 8. How to load & run inference
 
 The pre-trained weights are hosted at
-[`szabopeter/joint-dynunet-3d-pseudo-lidc`](https://huggingface.co/szabopeter/joint-dynunet-3d-pseudo-lidc). Download and load
+[`HalmosiL/joint-dynunet-3d-pseudo-lidc`](https://huggingface.co/HalmosiL/joint-dynunet-3d-pseudo-lidc). Download and load
 directly:
 
 ```bash
-huggingface-cli download szabopeter/joint-dynunet-3d-pseudo-lidc --local-dir ./ckpt
+huggingface-cli download HalmosiL/joint-dynunet-3d-pseudo-lidc --local-dir ./ckpt
 ```
 
 ```python
@@ -201,4 +201,4 @@ Produced by `scripts/instance_metrics.py --config configs/joint_dynunet_pseudo.y
 - Metrics JSON `checkpoints/joint_dynunet_pseudo/eval_metrics_joint_test.json`
 - Command      `python eval_metrics_joint.py --config configs/joint_dynunet_pseudo.yaml --ckpt checkpoints/joint_dynunet_pseudo/best_model.pth --split test`
 
-Companion variant: [`szabopeter/joint-dynunet-3d-ex-lidc`](https://huggingface.co/szabopeter/joint-dynunet-3d-ex-lidc) — same architecture, ex-LIDC data variant.
+Companion variant: [`HalmosiL/joint-dynunet-3d-ex-lidc`](https://huggingface.co/HalmosiL/joint-dynunet-3d-ex-lidc) — same architecture, ex-LIDC data variant.

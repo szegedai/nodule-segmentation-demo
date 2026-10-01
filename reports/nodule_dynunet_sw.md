@@ -3,8 +3,8 @@
 ## 1. Task
 
 Voxel-level segmentation of pulmonary nodules in 3D chest CT volumes,
-lung-bbox-cropped. Same task as the paper's `dynunet_v2`
-model — the only difference is inference recipe: **sliding-window over 128³
+lung-bbox-cropped. Same task as the earlier resize-recipe
+`dynunet` model — the only difference is inference recipe: **sliding-window over 128³
 patches at native resolution** rather than a single forward on a 256³
 resample.
 
@@ -30,7 +30,7 @@ resample.
 
 ## 3. Data
 
-Same unified corpus + split as the paper's 256³ baselines:
+Same unified corpus + split as the resize-recipe 256³ models:
 
 | Source          | Role |
 |-----------------|------|

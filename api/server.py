@@ -1,8 +1,8 @@
 """FastAPI service that runs the two-stage nodule pipeline on a raw CT.
 
 Default model combo (paper's best test-set numbers):
-    - ROI:    szabopeter/roi-swinunetr-2d           (test mIoU 0.983)
-    - Nodule: szabopeter/nodule-dynunet-3d          (test mIoU 0.759)
+    - ROI:    HalmosiL/roi-swinunetr-2d           (test mIoU 0.983)
+    - Nodule: HalmosiL/nodule-dynunet-3d          (test mIoU 0.759)
 
 Endpoints:
     GET  /                → { name, models, device }
@@ -48,8 +48,8 @@ from inference import (          # noqa: E402
 from model import build_model    # noqa: E402
 
 
-ROI_REPO    = "szabopeter/roi-swinunetr-2d"
-NODULE_REPO = "szabopeter/nodule-dynunet-3d"
+ROI_REPO    = "HalmosiL/roi-swinunetr-2d"
+NODULE_REPO = "HalmosiL/nodule-dynunet-3d"
 
 
 app = FastAPI(

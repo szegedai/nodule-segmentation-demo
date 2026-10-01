@@ -4,8 +4,8 @@ Thin FastAPI wrapper around the demo's two-stage inference pipeline.
 POST a raw CT `.npz`, get back a binary nodule-mask `.npz`.
 
 Default model combo — the paper's best test-set numbers:
-- ROI:    [`szabopeter/roi-swinunetr-2d`](https://huggingface.co/szabopeter/roi-swinunetr-2d) — test mIoU 0.983
-- Nodule: [`szabopeter/nodule-dynunet-3d`](https://huggingface.co/szabopeter/nodule-dynunet-3d) — test mIoU 0.759
+- ROI:    [`HalmosiL/roi-swinunetr-2d`](https://huggingface.co/HalmosiL/roi-swinunetr-2d) — test mIoU 0.983
+- Nodule: [`HalmosiL/nodule-dynunet-3d`](https://huggingface.co/HalmosiL/nodule-dynunet-3d) — test mIoU 0.759
 
 ## Install
 

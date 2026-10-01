@@ -17,7 +17,7 @@ nine trained checkpoints are hosted on HuggingFace under
 ```bash
 pip install -r requirements.txt
 export DATA_ROOT=/path/to/unified          # dir with ct_3d/, nodule_sem_seg_3d/
-python train.py --config configs/segresnet_wide.yaml   # reproduce the paper's best model
+python train.py --config configs/segresnet_wide_sw_ce10.yaml   # reproduce the paper's best 3D baseline
 ```
 
 That's it. Every hyperparameter, the persisted train/val split, and the
@@ -40,8 +40,8 @@ Two pipelines supported by `inference.py`:
 pip install huggingface_hub                     # if not already installed
 huggingface-cli login                           # first time only
 
-huggingface-cli download szabopeter/roi-swinunetr-2d          --local-dir ./ckpts/roi
-huggingface-cli download szabopeter/nodule-segresnet-3d-wide  --local-dir ./ckpts/nodule
+huggingface-cli download HalmosiL/roi-swinunetr-2d          --local-dir ./ckpts/roi
+huggingface-cli download HalmosiL/nodule-segresnet-3d-wide  --local-dir ./ckpts/nodule
 
 python inference.py \
     --ct         path/to/case.npz \
@@ -53,7 +53,7 @@ python inference.py \
 **Joint end-to-end** (single 3-class model, no bbox stage):
 
 ```bash
-huggingface-cli download szabopeter/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
+huggingface-cli download HalmosiL/joint-dynunet-3d-ex-lidc --local-dir ./ckpts/joint
 
 python inference.py \
     --ct        path/to/case.npz \
@@ -71,7 +71,7 @@ you'd rather pass paths directly.
 ## HTTP API
 
 A FastAPI wrapper around the two-stage pipeline is under
-[`api/`](api/). It ships the paper's best test-set model combo
+[`api/`](api/). It ships the resize-recipe two-stage model combo
 (SwinUNETR ROI + DynUNet nodule) and exposes a `POST /predict`
 endpoint that takes a CT `.npz` and returns a binary nodule-mask
 `.npz`:
@@ -164,25 +164,27 @@ being ~2.5× slower per epoch than either. Not retrained; not reported
 in the paper. The *2D* SwinUNETR appears only in the ROI section below
 and performs well.**
 
-### Sliding-window variants (not paper baselines)
+### Sliding-window variants (the paper's baselines)
 
 Nine `*_sw.yaml` configs — the two 2D ROI models plus the same three two-stage nodule
 architectures and four joint variants as above, but trained with
 **random 128³ positive-biased patches** at native resolution and
-evaluated with MONAI's `sliding_window_inference` instead of the
-paper's single 256³ resize forward. These runs keep the baseline
+evaluated with MONAI's `sliding_window_inference` instead of a single
+256³ resize forward. **The dataset paper reports the sliding-window
+ce10 models (and the SW ROI models) as its baselines**; the resize
+models are the earlier recipe, kept for comparison. These runs keep the baseline
 nodule CE weight of 100 (the `*_sw_ce10.yaml` variants below lower it
 to 10).
 
 The mode is a `training.mode: sliding_window` toggle in the YAML;
-default `resize` reproduces the paper recipe byte-for-byte. See any
+default `resize` reproduces the earlier resize recipe byte-for-byte. See any
 `configs/*_sw.yaml` for the extra keys (`patch_size`,
 `patches_per_volume`, `pos_neg_ratio` / `class_sample_ratios`,
 `inference.sw_overlap`).
 
 **Test-set summary** (all seven vs. their 256³ paper counterpart):
 
-| Model | 256³ nodule Dice (paper) | SW (ce=100) nodule Dice | Δ |
+| Model | 256³ nodule Dice (resize recipe) | SW (ce=100) nodule Dice | Δ |
 |---|---:|---:|---:|
 | `segresnet_small_sw` | 0.6478 | 0.5192 | −0.129 |
 | `segresnet_wide_sw`  | 0.6637 | 0.5387 | −0.125 |
@@ -220,9 +222,9 @@ nodule Dice (micro), same split as above:
 | `joint_dynunet_pseudo_sw_ce10`    | 0.4021 | 0.4403 | +0.038 | 0.263 → 0.300 |
 
 Pre-trained weights of the ce10 variants are on HuggingFace:
-[`szabopeter/nodule-segresnet-3d-small-sw`](https://huggingface.co/szabopeter/nodule-segresnet-3d-small-sw),
-[`szabopeter/nodule-segresnet-3d-wide-sw`](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide-sw),
-[`szabopeter/nodule-dynunet-3d-sw`](https://huggingface.co/szabopeter/nodule-dynunet-3d-sw).
+[`HalmosiL/nodule-segresnet-3d-small-sw`](https://huggingface.co/HalmosiL/nodule-segresnet-3d-small-sw),
+[`HalmosiL/nodule-segresnet-3d-wide-sw`](https://huggingface.co/HalmosiL/nodule-segresnet-3d-wide-sw),
+[`HalmosiL/nodule-dynunet-3d-sw`](https://huggingface.co/HalmosiL/nodule-dynunet-3d-sw).
 
 The lower weight helps consistently (best SW model is now
 `segresnet_wide_sw_ce10` at 0.606) but closes only part of the gap to
@@ -300,15 +302,15 @@ during paper review — request access if you need them):
 
 | Task        | Model                                    | HuggingFace repo |
 |-------------|------------------------------------------|------------------|
-| ROI (2D)    | SegResNet                                | [szabopeter/roi-segresnet-2d](https://huggingface.co/szabopeter/roi-segresnet-2d) |
-| ROI (2D)    | SwinUNETR (small)                        | [szabopeter/roi-swinunetr-2d](https://huggingface.co/szabopeter/roi-swinunetr-2d) |
-| Nodule (3D) | SegResNet small                | [szabopeter/nodule-segresnet-3d-small](https://huggingface.co/szabopeter/nodule-segresnet-3d-small) |
-| Nodule (3D) | SegResNet **wide** (paper's best two-stage) | [szabopeter/nodule-segresnet-3d-wide](https://huggingface.co/szabopeter/nodule-segresnet-3d-wide) |
-| Nodule (3D) | DynUNet / 3D U-Net             | [szabopeter/nodule-dynunet-3d](https://huggingface.co/szabopeter/nodule-dynunet-3d) |
-| Joint (3D)  | SegResNet, ex-LIDC                       | [szabopeter/joint-segresnet-3d-ex-lidc](https://huggingface.co/szabopeter/joint-segresnet-3d-ex-lidc) |
-| Joint (3D)  | SegResNet, pseudo-LIDC                   | [szabopeter/joint-segresnet-3d-pseudo-lidc](https://huggingface.co/szabopeter/joint-segresnet-3d-pseudo-lidc) |
-| Joint (3D)  | DynUNet, ex-LIDC (best joint)            | [szabopeter/joint-dynunet-3d-ex-lidc](https://huggingface.co/szabopeter/joint-dynunet-3d-ex-lidc) |
-| Joint (3D)  | DynUNet, pseudo-LIDC                     | [szabopeter/joint-dynunet-3d-pseudo-lidc](https://huggingface.co/szabopeter/joint-dynunet-3d-pseudo-lidc) |
+| ROI (2D)    | SegResNet                                | [HalmosiL/roi-segresnet-2d](https://huggingface.co/HalmosiL/roi-segresnet-2d) |
+| ROI (2D)    | SwinUNETR (small)                        | [HalmosiL/roi-swinunetr-2d](https://huggingface.co/HalmosiL/roi-swinunetr-2d) |
+| Nodule (3D) | SegResNet small                | [HalmosiL/nodule-segresnet-3d-small](https://huggingface.co/HalmosiL/nodule-segresnet-3d-small) |
+| Nodule (3D) | SegResNet **wide** (resize recipe) | [HalmosiL/nodule-segresnet-3d-wide](https://huggingface.co/HalmosiL/nodule-segresnet-3d-wide) |
+| Nodule (3D) | DynUNet / 3D U-Net             | [HalmosiL/nodule-dynunet-3d](https://huggingface.co/HalmosiL/nodule-dynunet-3d) |
+| Joint (3D)  | SegResNet, ex-LIDC                       | [HalmosiL/joint-segresnet-3d-ex-lidc](https://huggingface.co/HalmosiL/joint-segresnet-3d-ex-lidc) |
+| Joint (3D)  | SegResNet, pseudo-LIDC                   | [HalmosiL/joint-segresnet-3d-pseudo-lidc](https://huggingface.co/HalmosiL/joint-segresnet-3d-pseudo-lidc) |
+| Joint (3D)  | DynUNet, ex-LIDC (best joint)            | [HalmosiL/joint-dynunet-3d-ex-lidc](https://huggingface.co/HalmosiL/joint-dynunet-3d-ex-lidc) |
+| Joint (3D)  | DynUNet, pseudo-LIDC                     | [HalmosiL/joint-dynunet-3d-pseudo-lidc](https://huggingface.co/HalmosiL/joint-dynunet-3d-pseudo-lidc) |
 
 Each HF repo contains `model.pth` (weights-only, `torch.save`d
 state_dict), the exact `config.yaml` used at training time, and a model
@@ -368,10 +370,10 @@ slice. Held-out test split (45,751 slices):
 
 Both models avoid the resize-recipe SegResNet's per-slice p05 = 0.0
 failure on near-empty apex/base slices. Pre-trained weights:
-[`szabopeter/roi-segresnet-2d-sw`](https://huggingface.co/szabopeter/roi-segresnet-2d-sw),
-[`szabopeter/roi-swinunetr-2d-sw`](https://huggingface.co/szabopeter/roi-swinunetr-2d-sw).
+[`HalmosiL/roi-segresnet-2d-sw`](https://huggingface.co/HalmosiL/roi-segresnet-2d-sw),
+[`HalmosiL/roi-swinunetr-2d-sw`](https://huggingface.co/HalmosiL/roi-swinunetr-2d-sw).
 All models of the project are collected at
-[huggingface.co/collections/szabopeter/lung-nodule-segmentation](https://huggingface.co/collections/szabopeter/lung-nodule-segmentation-6abce4bec246c6977548f23b). Full reports:
+[huggingface.co/collections/HalmosiL/medical-image-segmentation](https://huggingface.co/collections/HalmosiL/medical-image-segmentation-6a71c92de761a2fc4ce68162). Full reports:
 [`reports/roi_segresnet_sw.md`](reports/roi_segresnet_sw.md),
 [`reports/roi_swinunetr_sw.md`](reports/roi_swinunetr_sw.md); metric
 JSONs under `results_eval/`.
@@ -381,17 +383,17 @@ JSONs under `results_eval/`.
 Trained ROI checkpoints are hosted on HuggingFace (private during paper
 review — request access if you need them):
 
-- SegResNet: [szabopeter/roi-segresnet-2d](https://huggingface.co/szabopeter/roi-segresnet-2d)
-- SwinUNETR: [szabopeter/roi-swinunetr-2d](https://huggingface.co/szabopeter/roi-swinunetr-2d)
+- SegResNet: [HalmosiL/roi-segresnet-2d](https://huggingface.co/HalmosiL/roi-segresnet-2d)
+- SwinUNETR: [HalmosiL/roi-swinunetr-2d](https://huggingface.co/HalmosiL/roi-swinunetr-2d)
 
 Each repo ships `model.pth` (weights-only). To use with `--resume` in
 this repo, download and rename:
 
 ```bash
-huggingface-cli download szabopeter/roi-segresnet-2d model.pth --local-dir checkpoints/roi
+huggingface-cli download HalmosiL/roi-segresnet-2d model.pth --local-dir checkpoints/roi
 mv checkpoints/roi/model.pth checkpoints/roi/best.pth
 
-huggingface-cli download szabopeter/roi-swinunetr-2d model.pth --local-dir checkpoints/roi_swin
+huggingface-cli download HalmosiL/roi-swinunetr-2d model.pth --local-dir checkpoints/roi_swin
 mv checkpoints/roi_swin/model.pth checkpoints/roi_swin/best_model.pth
 ```
 
@@ -419,7 +421,7 @@ depends on your CT corpus, and (for LIDC) on the ROI model — so
 generate it locally once before joint training:
 
 ```bash
-huggingface-cli download szabopeter/roi-segresnet-2d --local-dir ./ckpts/roi
+huggingface-cli download HalmosiL/roi-segresnet-2d --local-dir ./ckpts/roi
 export DATA_ROOT=/path/to/unified
 
 python scripts/build_lung_3d.py \
@@ -467,7 +469,7 @@ loss.py                             FocalTverskyCELoss (2-cls) + MulticlassFocal
 dataset.py                          NoduleFineCropDataset + Roi2DDataset + JointFullVolumeDataset
 transforms.py                       train / val transform pipelines
 configs/segresnet_small.yaml     two-stage nodule: small SegResNet
-configs/segresnet_wide.yaml      two-stage nodule: wide SegResNet (paper's best)
+configs/segresnet_wide.yaml      two-stage nodule: wide SegResNet (resize recipe)
 configs/dynunet.yaml             two-stage nodule: DynUNet (3D U-Net)
 configs/{roi,roi_swin}.yaml         2D ROI configs
 configs/joint_*.yaml                joint (end-to-end) configs (4)
